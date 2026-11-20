@@ -97,7 +97,7 @@ public:
             if (!have) { ++errors_; continue; }
             r.frame = got;
             if (got.cmd == kCmdError) {
-                r.error = got.payload.empty() ? kErrBadCommand : got.payload[0];
+                r.error = got.payload.empty() ? static_cast<uint8_t>(kErrBadCommand) : got.payload[0];
                 note(addr, true);
                 // an error answer carries no status: ask for it, so that what the node shows is what the feeder holds
                 if (cmd != kCmdStatus && cmd != kCmdPing && addr != kAddrAll) request(addr, kCmdStatus);
