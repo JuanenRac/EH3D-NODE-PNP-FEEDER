@@ -1,0 +1,35 @@
+# EH3D-NODE-PNP-FEEDER - feeder.cfg.example
+# The settings of the node, one `key = value` per line, `#` for a comment. The values below are the defaults: a file with only the lines you change is enough.
+# A value out of its range, or a key nobody knows, is reported and the default stays; a settings pair that disagrees goes back to the defaults.
+
+# --- the link ---
+name = pnp-feeder             # lower case letters, digits and hyphens, up to 32
+port = 80                     # 1 to 65535
+# token = ...                 # the node refuses every request that moves or changes something until it has one (up to 64 characters). Never written back.
+
+# --- the chain of feeders ---
+slots = 8                     # 1 to 32 feeders on the chain
+pitch_mm = 4                  # 2, 4, 8, 12 or 16: how far one advance moves the tape
+actuator = stepper            # stepper or servo
+steps_per_mm = 80             # 1 to 2000 (stepper)
+servo_deg_per_mm = 9          # 0.1 to 90 (servo)
+motion_mm_per_s = 20          # 1 to 200
+retry_mm = 0.5                # 0.1 to 2: the small move made when the pocket is not found after an advance
+max_retries = 2               # 0 to 5
+pocket_check = 1              # look for the pocket after every advance
+film_check = 1                # refuse to go on while the cover film is not peeled
+tension_min = 200             # 0 to 1023 sensor units: below this the tape is slack
+tension_max = 800             # above this the tape is too tight
+low_pockets = 20              # 0 to 1000: warn when this few advances are left (when the count is known)
+retract_enabled = 0           # a backward move is refused unless this is on
+
+# --- the watchdogs and the repeat of the bus ---
+link_lost_ms = 3000           # 200 to 60000: a feeder that hears nothing from the node for this long stops and holds a fault
+server_lost_ms = 15000        # 1000 to 600000: the node that hears nothing from the server for this long stops the chain
+advance_timeout_ms = 5000     # 500 to 60000: an advance that is not finished by then is stopped
+bus_retries = 2               # 0 to 5: a frame without a good answer is sent again this many times
+offline_after = 3             # 1 to 20: failed exchanges in a row after which a slot is offline
+
+# --- the automatic stop of a bad feeder ---
+fault_window = 6              # 2 to 32: the last advances that are looked at
+fault_limit = 3               # 1 to the window: this many faults in the window disable the feeder until a person re-enables it

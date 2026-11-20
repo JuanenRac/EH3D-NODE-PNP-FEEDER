@@ -1,0 +1,166 @@
+{
+  "repo": "EH3D-NODE-PNP-FEEDER",
+  "ecosystem": "eh3d",
+  "tagline": "The node of the tape feeders of a pick-and-place machine: advance, count, jam and tension checks, a safe state.",
+  "description": "EH3D-NODE-PNP-FEEDER is the logic of the node that stands between the server and a chain of tape feeders. The server asks over HTTP with a token; the node speaks a checked frame to the feeders, follows each advance until the move is over and stops everything by itself when the server is lost. All of it is tried against a simulator; the firmware and the hardware are not written.",
+  "columns": [
+    "WHO USES IT",
+    "THIS REPOSITORY",
+    "WHAT IT DEPENDS ON"
+  ],
+  "nodes": [
+    {
+      "id": "server",
+      "column": 0,
+      "level": "external",
+      "title": "EH3D-SERVER",
+      "lines": [
+        "the plugin for pick-and-place",
+        "machines: feeders by slot"
+      ]
+    },
+    {
+      "id": "pnp",
+      "column": 0,
+      "level": "external",
+      "title": "EH3D-PHOENIX-PNP",
+      "lines": [
+        "plans the jobs and describes",
+        "the feeders and this node"
+      ]
+    },
+    {
+      "id": "net",
+      "column": 1,
+      "level": "tested",
+      "title": "Network words",
+      "lines": [
+        "status, advance, count, pitch,",
+        "acknowledge; token; contract"
+      ],
+      "code": [
+        "core/feeder_node.hpp",
+        "docs/CONTRACT.md"
+      ]
+    },
+    {
+      "id": "chain",
+      "column": 1,
+      "level": "tested",
+      "title": "Chain and frame",
+      "lines": [
+        "eh3d.feeder/1 with a CRC-16;",
+        "repeats, discovery, advance"
+      ],
+      "code": [
+        "core/feeder_chain.hpp",
+        "core/feeder_frame.hpp"
+      ]
+    },
+    {
+      "id": "settings",
+      "column": 1,
+      "level": "tested",
+      "title": "Settings file",
+      "lines": [
+        "feeder.cfg with safe defaults;",
+        "a wrong value never opens a limit"
+      ],
+      "code": [
+        "core/feeder_config.hpp"
+      ]
+    },
+    {
+      "id": "unit",
+      "column": 1,
+      "level": "tested",
+      "title": "One feeder",
+      "lines": [
+        "pitch, count, jam, tension,",
+        "film, pocket, faults, safe state"
+      ],
+      "code": [
+        "core/feeder_unit.hpp"
+      ]
+    },
+    {
+      "id": "base",
+      "column": 2,
+      "level": "contract",
+      "title": "Shared firmware base",
+      "lines": [
+        "ten plain helpers from",
+        "EH3D-COMMON, kept identical"
+      ],
+      "code": [
+        "core/json.hpp",
+        "core/auth.hpp"
+      ]
+    },
+    {
+      "id": "firmware",
+      "column": 2,
+      "level": "untested",
+      "title": "ESP-IDF firmware",
+      "lines": [
+        "network, panel, update:",
+        "not written, never run"
+      ]
+    },
+    {
+      "id": "hardware",
+      "column": 2,
+      "level": "untested",
+      "title": "Motor, sensors, bus",
+      "lines": [
+        "drivers and the RS-485 line:",
+        "not written, never run"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "server",
+      "to": "net",
+      "label": "HTTP",
+      "level": "untested"
+    },
+    {
+      "from": "net",
+      "to": "chain",
+      "level": "tested"
+    },
+    {
+      "from": "chain",
+      "to": "unit",
+      "level": "tested"
+    },
+    {
+      "from": "settings",
+      "to": "unit",
+      "level": "tested"
+    },
+    {
+      "from": "base",
+      "to": "net",
+      "level": "contract"
+    },
+    {
+      "from": "chain",
+      "to": "firmware",
+      "level": "untested"
+    },
+    {
+      "from": "unit",
+      "to": "hardware",
+      "level": "untested"
+    }
+  ],
+  "legend": {
+    "tested": "rules covered by tests on a computer",
+    "contract": "shared base, kept identical by a tool",
+    "untested": "has not run on real hardware",
+    "external": "a program, a person or another repository"
+  },
+  "footer": "Nothing has run on a board, a motor or a bus yet."
+}

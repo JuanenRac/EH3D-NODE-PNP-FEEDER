@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "ecosystem": "EH3D",
+  "name": "EH3D-NODE-PNP-FEEDER",
+  "version": "0.0.1",
+  "role": "node",
+  "stack": "C++17 (host-tested core); ESP-IDF firmware for the ESP32-S3 (not written yet)",
+  "technologies": [
+    "C++17",
+    "ESP-IDF",
+    "ESP32-S3",
+    "RS-485"
+  ],
+  "deployment_target": "mcu",
+  "maturity": "scaffolding",
+  "evidence": "simulator",
+  "hardware_bound": true,
+  "family": "Pick and Place Nodes",
+  "parent": null,
+  "build": "cmake -S tests -B build/host && cmake --build build/host && ctest --test-dir build/host -C Debug",
+  "notes": "Scaffolding v0.0.1: the node of the tape feeders of a pick-and-place machine. It advances the tape of each feeder by a pitch of 2, 4, 8, 12 or 16 mm over a serial bus with its own checked frame, counts the parts, watches the pocket, the tension and the cover film, holds a fault when the tape jams and stops by itself when it loses the node or the server. The rules are in the host-tested core and are tried against a simulator of the chain; the ESP-IDF firmware is not written, and nothing has been connected to a motor, a tape sensor or a bus.",
+  "native_version": {
+    "file": "VERSION",
+    "pattern": "^(\\d+\\.\\d+\\.\\d+)"
+  }
+}
