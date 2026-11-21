@@ -12,14 +12,14 @@
   <img src="https://img.shields.io/badge/License-GPL%203.0--or--later-blue.svg" alt="GPL 3.0 or later">
   <img src="https://img.shields.io/badge/Stack-C%2B%2B17%20%2B%20Python-blue.svg" alt="C++17 and Python">
   <img src="https://img.shields.io/badge/Languages-8-00E5FF.svg" alt="Languages">
-  <img src="https://img.shields.io/badge/Tests-68-2EA043.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-102-2EA043.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.0.1-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-scaffolding-FFB020.svg" alt="Maturity">
 </p>
 
 ---
 
-**诚实性核对 - 今天真正能运行的内容：** 这是一个带有真实且经过测试的逻辑、但没有硬件的脚手架。节点的规则在计算机上对模拟器运行（68 个测试通过），但这里的内容从未编译成固件、烧录，也从未连接到电机、料带传感器或供料器总线。
+**诚实性核对 - 今天真正能运行的内容：** 这是一个带有真实且经过测试的逻辑、但没有硬件的脚手架。节点的规则在计算机上对模拟器运行（102 个测试通过），但这里的内容从未编译成固件、烧录，也从未连接到电机、料带传感器或供料器总线。
 
 ---
 
@@ -31,7 +31,7 @@
 |---|---|
 | 版本 | `0.0.1` |
 | 成熟度 | 脚手架 |
-| 测试 | 68 |
+| 测试 | 102 |
 | 技术栈 | C++17 (host tests), Python 3.10+ |
 | 真实硬件 | 尚未在硬件上运行 |
 
@@ -45,7 +45,7 @@
 
 | 领域 | 状态 | 在这里的含义 |
 |---|---|---|
-| 逻辑与模拟器 | 🟡 | 节点的规则对固定种子的模拟器运行；68 个测试在计算机上通过。 |
+| 逻辑与模拟器 | 🟡 | 节点的规则对固定种子的模拟器运行；102 个测试在计算机上通过。 |
 | 网络契约 | 🟡 | 节点的用语写在 docs/CONTRACT.md 中，页面与应答不一致时测试会失败；服务器的插件尚未使用该节点。 |
 | 固件 | 🟠 | 电路板的固件尚未编写：只导入了共享基础中的简单辅助代码。 |
 | 真实硬件 | 🔴 | 电机、料带传感器或供料器总线上尚未运行任何东西。 |
@@ -53,6 +53,7 @@
 ## 🎯 概述
 
 * **一个节点，一串供料器：** 按 2、4、8、12 或 16 mm 的节距推进每个供料器的料带，统计元件数量，检查料穴、张力和盖带，料带卡住时保持故障，并在失去节点或服务器时自行停止。
+* **三种总线，一种帧：** 同一帧 `eh3d.feeder/1` 可经 RS-485（带收发器方向线）、CAN（按七字节分片）或 I2C（7 位地址）传输，在 `feeder.cfg` 中选择，任一总线最多挂 32 个供料器；每种总线都用会丢帧、损坏、延迟和冲突的模拟器测试过。
 
 ## 🧩 在 EH3D 中的角色
 
@@ -76,7 +77,7 @@
 
 ## 🔌 接口
 
-服务器、程序和手机通过 HTTP 与节点通信，方式与套件中的其他节点相同（JSON 和 Bearer 令牌）；节点通过串行总线使用帧 `eh3d.feeder/1` 与其供料器通信。页面 [docs/CONTRACT.md](docs/CONTRACT.md) 就是契约，测试使它与应答保持一致。
+服务器、程序和手机通过 HTTP 与节点通信，方式与套件中的其他节点相同（JSON 和 Bearer 令牌）；节点通过设置 `bus` 选定的 RS-485、CAN 或 I2C，使用帧 `eh3d.feeder/1` 与其供料器通信。页面 [docs/CONTRACT.md](docs/CONTRACT.md) 就是契约，测试使它与应答保持一致。
 
 ```text
 GET  /api/status                         the node and all its feeders (always answered)
@@ -109,7 +110,7 @@ python -I -m unittest discover -s tools -p "test_*.py"
 
 ## 🧪 测试
 
-68 个测试：固定种子的 C++ 主机测试（运行模拟器和网络用语，并将契约页面与应答对比）以及仓库的 Python 测试。CI 还会用 AddressSanitizer 和 UBSan 运行 C++ 测试。
+102 个测试：固定种子的 C++ 主机测试（运行模拟器和网络用语，并将契约页面与应答对比）以及仓库的 Python 测试。CI 还会用 AddressSanitizer 和 UBSan 运行 C++ 测试。
 
 ## 🏗️ 构建与发布
 
@@ -131,13 +132,15 @@ EH3D-NODE-PNP-FEEDER/
 │   ├── feeder_frame.hpp                                                                                                                     链路总线的帧及其校验
 │   ├── feeder_unit.hpp                                                                                                                      单个供料器对料带的处理
 │   ├── feeder_chain.hpp                                                                                                                     链路的节点一侧：重发、发现、进给
+│   ├── feeder_transport.hpp                                                                                                                 RS-485、CAN 和 I2C 上的帧：地址、分片、故障、上限
 │   ├── feeder_node.hpp version.hpp                                                                                                          节点在网络上的用语
-│   ├── feeder_sim.hpp                                                                                                                       计算机上的供料器链，用于测试
+│   ├── feeder_sim.hpp                                                                                                                       电脑上的链路：料带、传感器、带故障的三种总线之一
 │   └── json.hpp auth.hpp semver.hpp backoff.hpp task_health.hpp stored_load.hpp memory_budget.hpp net_text.hpp node_id.hpp civil_time.hpp   各节点共享的简单辅助代码，由工具保持一致
 ├── tests/
 │   ├── check.hpp CMakeLists.txt                                                                                                             测试框架及其构建方式
 │   ├── test_frame.cpp                                                                                                                       帧、校验和噪声；设置文件
 │   ├── test_unit.cpp                                                                                                                        模拟料带上的供料器：卡带、张力、盖带、料穴、总线故障
+│   ├── test_bus.cpp                                                                                                                         三种总线：设置、上限、CAN 分片、I2C 地址、故障
 │   └── test_node.cpp                                                                                                                        网络用语、令牌、安全状态和契约页面
 ├── docs/
 │   ├── CONTRACT.md                                                                                                                          节点在网络（和链路）上所说的内容

@@ -11,6 +11,7 @@
 
 #include "feeder_config.hpp"
 #include "feeder_frame.hpp"
+#include "feeder_transport.hpp"
 #include "feeder_unit.hpp"
 
 namespace pnp_feeder {
@@ -25,6 +26,8 @@ public:
     /// Lets time pass (the firmware sleeps; the simulator runs its feeders).
     virtual void wait(std::uint32_t ms) = 0;
     virtual std::uint32_t now_ms() const = 0;
+    /// What the bus under the node counted (the simulator fills it; a bus that does not count answers zeros).
+    virtual LinkStats link_stats() const { return LinkStats(); }
 };
 
 inline const char* error_text(std::uint8_t code) {
@@ -90,7 +93,7 @@ public:
             ++exchanges_;
             if (attempt > 0) ++retries_;
             Decoder d;
-            d.push(bus_.exchange(bytes, 20));
+            d.push(bus_.exchange(bytes, static_cast<std::uint32_t>(cfg_.reply_timeout_ms)));
             Frame got;
             bool have = false;
             while (d.next(got)) { if (got.seq == f.seq && got.addr == kAddrNode) { have = true; break; } }

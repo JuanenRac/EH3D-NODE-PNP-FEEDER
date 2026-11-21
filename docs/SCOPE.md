@@ -10,19 +10,20 @@ It is for the assembly of boards and of their components. It is not for taking u
 
 ## What it does
 
-* Speaks the frame `eh3d.feeder/1` (a CRC-16, an address, a sequence number) to up to 32 feeders on a serial bus, sends a frame again when no good answer comes back, and never makes the same move twice when only the answer was lost.
+* Speaks the frame `eh3d.feeder/1` (a CRC-16, an address, a sequence number) to up to 32 feeders on a bus that is RS-485, CAN or I2C (a setting), sends a frame again when no good answer comes back, and never makes the same move twice when only the answer was lost.
 * Advances the tape by a pitch of 2, 4, 8, 12 or 16 mm, one to eight pitches at a time, and checks after the move that the pocket is where it should be (with a few small moves to find it).
 * Counts the parts left when a person tells it, warns when few are left and refuses to go on when none are.
 * Holds a fault for a jam, a slack or a tight tape, a cover film that is not peeled, a pocket that is not found and a lost node, and does not clear a fault while its cause is there; a feeder that faults too often in a short window disables itself until a person re-enables it.
 * Answers over HTTP with the words of the other nodes of the suite: a status, one feeder, advance, retract (off by default), identify, count, pitch, acknowledge, stop and discover, all behind a token.
 * Stops the chain by itself when the server is not heard, and the feeders stop by themselves when the node is not heard.
-* Comes with a simulator of the chain (a tape that moves, sensors, a bus that loses and damages frames) so that all of this is tried on a computer with a fixed seed.
+* Carries the same frame over RS-485 (with the direction line of its transceiver), CAN (in pieces of seven bytes) or I2C (with 7-bit addresses), refuses a chain that does not fit its bus, and counts what the bus held, lost or delayed.
+* Comes with a simulator of the chain (a tape that moves, sensors, a bus of the kind the settings name that loses, damages and delays frames) so that all of this is tried on a computer with a fixed seed.
 
 ## What it will not do
 
 * No decision about the limits of a machine, its interlocks or its emergency stop (see below).
 * No handling of objects, no arms and no robots: this is the feeder of a machine that places components on boards.
-* No tape sensor, motor or transceiver is driven yet: that is the firmware, which is not written.
+* No tape sensor, motor, transceiver, CAN controller or I2C master is driven yet: that is the firmware, which is not written.
 
 ## What it never decides
 

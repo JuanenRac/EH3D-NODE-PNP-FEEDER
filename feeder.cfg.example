@@ -30,6 +30,17 @@ advance_timeout_ms = 5000     # 500 to 60000: an advance that is not finished by
 bus_retries = 2               # 0 to 5: a frame without a good answer is sent again this many times
 offline_after = 3             # 1 to 20: failed exchanges in a row after which a slot is offline
 
+# --- the bus under the chain: the same frame (eh3d.feeder/1) goes over any of the three; only the lines of the bus you choose are used ---
+bus = rs485                   # rs485, can or i2c: how the node is wired to its feeders (up to 32 on any of them)
+reply_timeout_ms = 20         # 5 to 500: how long the node waits for the answer to a frame; the longest frame and its answer must fit in it, or the bus rate goes back to the default
+rs485_baud = 115200           # 9600 to 2000000 (rs485)
+rs485_turnaround_us = 100     # 10 to 5000 (rs485): the time between the end of a frame and the switch of the direction line (DE/RE) of the transceiver
+can_bitrate = 250000          # 125000, 250000, 500000 or 1000000 (can)
+can_id_base = 256             # 1 to 1900 (can): a frame to feeder N has the identifier base+N, its answer base+64+N, a frame to all the identifier base
+i2c_clock_hz = 100000         # 100000 or 400000 (i2c)
+i2c_base_addr = 16            # 8 to 119 (i2c): the 7-bit address of feeder 1; feeder N sits on base+N-1, and the last must not pass 119
+i2c_stretch_limit_us = 5000   # 100 to 100000 (i2c): a feeder that holds the clock longer than this is a timeout
+
 # --- the automatic stop of a bad feeder ---
 fault_window = 6              # 2 to 32: the last advances that are looked at
 fault_limit = 3               # 1 to the window: this many faults in the window disable the feeder until a person re-enables it

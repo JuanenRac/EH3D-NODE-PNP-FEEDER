@@ -1,4 +1,4 @@
-# EH3D-NODE-PNP-FEEDER host tests: the frames of the chain, the settings file, the feeder on a simulated tape, the node's side of the chain and the words of the network,
+# EH3D-NODE-PNP-FEEDER host tests: the frames of the chain, the settings file, the feeder on a simulated tape, the node's side of the chain, the three buses under it and the words of the network,
 # built with any C++17 compiler: cmake -S tests -B build/host && cmake --build build/host && ctest --test-dir build/host -C Debug
 # Copyright (C) 2026 JuanenRac (Electro Hobby 3D). GPL-3.0-or-later.
 cmake_minimum_required(VERSION 3.16)
@@ -18,7 +18,7 @@ string(REGEX MATCH "\"version\"[ \t]*:[ \t]*\"([0-9]+\\.[0-9]+\\.[0-9]+)\"" EH3D
 set(PNP_FEEDER_VERSION_TEXT "${CMAKE_MATCH_1}")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/../eh3d.project.json")
 
-foreach(name frame unit node)
+foreach(name frame unit node bus)
   add_executable(test_${name} test_${name}.cpp)
   target_compile_definitions(test_${name} PRIVATE PNP_FEEDER_VERSION="${PNP_FEEDER_VERSION_TEXT}" PNP_FEEDER_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/..")
 endforeach()
@@ -27,3 +27,4 @@ enable_testing()
 add_test(NAME frame COMMAND test_frame)
 add_test(NAME unit COMMAND test_unit)
 add_test(NAME node COMMAND test_node)
+add_test(NAME bus COMMAND test_bus)

@@ -212,6 +212,8 @@ public:
         w.field("safe", safe_).field("safe_reason", safe_ ? safe_reason_ : std::string("none"));
         w.field("bus_exchanges", static_cast<long long>(ctrl_.exchanges())).field("bus_retries", static_cast<long long>(ctrl_.retries()));
         w.field("bus_errors", static_cast<long long>(ctrl_.bus_errors()));
+        const LinkStats link = bus_.link_stats();
+        w.field("bus", bus_text(cfg_.bus)).field("bus_busy", static_cast<long long>(link.busy)).field("bus_collisions", static_cast<long long>(link.collisions));
         w.field("uptime_s", static_cast<long long>((bus_.now_ms() - started_) / 1000u));
         w.field("selfcheck", verdict).field("selfcheck_codes", joined);
         w.key("feeders").begin_array();

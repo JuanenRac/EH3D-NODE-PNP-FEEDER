@@ -4,6 +4,15 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **Three buses under one frame:** the chain can be wired with RS-485, CAN or I2C, chosen with `bus` in `feeder.cfg`, and the frame `eh3d.feeder/1` is the same on all of them; the node says its bus in the status.
+- **RS-485:** the direction line of the transceiver and its turnaround are modelled, with the baud rate and the turnaround as settings.
+- **CAN:** a frame is cut in pieces of seven bytes, each in a CAN frame with an identifier that names the feeder, and put back together; a lost or misplaced piece loses the frame and is counted; the bit rate and the first identifier are settings.
+- **I2C:** each feeder has a 7-bit address from a settings base, a feeder that is not there does not acknowledge, a feeder may hold the clock up to a limit that is a setting, and the general call reaches all of them.
+- **Limits of the chain:** up to 32 feeders on any bus; a chain that does not fit its bus, or a rate so slow that a frame does not fit in the reply time, goes back to the defaults with the key named.
+- **Faults that can be put on a bus** with a fixed seed: lost, damaged and late frames, a bus held by somebody else, two talkers at once, a clock held too long and a cut cable; the status counts what was busy or collided.
+- **Documents:** the page of the contract has a section on the buses and what changes in the wiring, the length and the rate; the hardware page has a bench test for each bus.
+- **Tests:** 34 new tests for the buses, 102 in all.
+
 ## [0.0.1] - The logic of the node and its simulator
 
 - **The settings of the node:** `feeder.cfg` with safe defaults (no token, no backward move, the pocket and the film checked), a pitch of 2, 4, 8, 12 or 16 mm, ranges for every value, and a refusal with the key for a value out of range or a key nobody knows.

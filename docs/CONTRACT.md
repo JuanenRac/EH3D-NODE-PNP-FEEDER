@@ -1,6 +1,6 @@
 # What the node says: on the network and on the chain
 
-The server, the desktop programs and the phones talk to the node over HTTP; the node talks to its feeders over a serial bus with the frame `eh3d.feeder/1`. The words of the first are built in `core/feeder_node.hpp`, the frame in `core/feeder_frame.hpp`, what a feeder does with a frame in `core/feeder_unit.hpp`, and `core/feeder_sim.hpp` is a chain on a computer that answers the very same words. A host test (`tests/test_node.cpp`) reads this page and fails when a key or a code is in the page and not in the answer, or the other way round, so the page cannot go stale.
+The server, the desktop programs and the phones talk to the node over HTTP; the node talks to its feeders over a bus (RS-485, CAN or I2C, chosen in the settings file) with the frame `eh3d.feeder/1`. The words of the first are built in `core/feeder_node.hpp`, the frame in `core/feeder_frame.hpp`, how the frame travels on each bus in `core/feeder_transport.hpp`, what a feeder does with a frame in `core/feeder_unit.hpp`, and `core/feeder_sim.hpp` is a chain on a computer that answers the very same words. A host test (`tests/test_node.cpp`) reads this page and fails when a key or a code is in the page and not in the answer, or the other way round, so the page cannot go stale.
 
 Nothing in this page has been checked against a real feeder or a real bus: it is checked against the simulator. The numbers of the simulated tape and noise are made up.
 
@@ -21,6 +21,9 @@ Always answered, with or without the token. One line of JSON.
 | `bus_exchanges` | number | frames sent on the bus since the start, the repeats included |
 | `bus_retries` | number | frames sent again because no good answer came back |
 | `bus_errors` | number | exchanges without a good answer |
+| `bus` | text | the bus of the chain, from the settings: `rs485`, `can` or `i2c` |
+| `bus_busy` | number | tries given up because the bus was held by somebody else |
+| `bus_collisions` | number | times two talkers were on the bus at once |
 | `uptime_s` | number | seconds since the start |
 | `selfcheck` | text | `ok`, `warn` or `fail` (see below) |
 | `selfcheck_codes` | text | the codes behind the verdict, separated by commas; empty when there are none |
@@ -115,6 +118,20 @@ The CRC is CRC-16/CCITT-FALSE (polynomial 0x1021, start 0xFFFF) over everything 
 | SET_PITCH | 0x09 | 2, 4, 8, 12 or 16 |
 
 The status is 6 bytes: the state, the fault, the count (2 bytes), the flags (1 tape, 2 pocket, 4 tension ok, 8 film clear, 16 low) and the pitch.
+
+## The bus under the chain
+
+The frame is the same on the three buses; the setting `bus` says which one the node is wired to, and its own keys give the rate and the addresses. A chain holds up to 32 feeders on any of them. A node whose settings ask for more slots than the bus holds, or whose rate is so slow that the longest frame and its answer do not fit in `reply_timeout_ms`, puts the slots, or the rate, back to the defaults and says which key it refused.
+
+| | RS-485 | CAN | I2C |
+|---|---|---|---|
+| Settings | `rs485_baud`, `rs485_turnaround_us` | `can_bitrate`, `can_id_base` | `i2c_clock_hz`, `i2c_base_addr`, `i2c_stretch_limit_us` |
+| Wiring | one twisted pair, half duplex, a transceiver with a direction line (DE/RE) and a termination at both ends | one twisted pair with the two ends terminated | two lines (clock and data) with pull-ups, short and on one board or one rack |
+| Address | the address inside the frame | the identifier: `can_id_base + N` to feeder N, `can_id_base + 64 + N` back, `can_id_base` to all | the 7-bit address `i2c_base_addr + N - 1`, the general call (0) to all |
+| Frame on the wire | the whole frame, as it is | cut in pieces of 7 bytes, each in a CAN frame whose first byte says the piece and the count | written whole to the address, then the answer is read |
+| Faults the bus can show | a frame lost or damaged, a late answer, a held line, two drivers at once | a lost piece, a frame the hardware sends again, no acknowledgement, arbitration lost | no acknowledgement of the address, a byte not acknowledged, a clock held too long |
+
+A frame that arrives damaged is refused by its CRC on any bus, and the node sends it again `bus_retries` times; a feeder that does not answer `offline_after` times in a row is offline. Everything in this section is checked against the simulator in `core/feeder_transport.hpp`; the rates, the lengths of cable and the number of feeders a real wire holds are listed as bench tests in `HARDWARE.md`.
 
 ## The simulator
 

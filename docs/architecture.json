@@ -1,8 +1,8 @@
 {
   "repo": "EH3D-NODE-PNP-FEEDER",
   "ecosystem": "eh3d",
-  "tagline": "The node of the tape feeders of a pick-and-place machine: advance, count, jam and tension checks, a safe state.",
-  "description": "EH3D-NODE-PNP-FEEDER is the logic of the node that stands between the server and a chain of tape feeders. The server asks over HTTP with a token; the node speaks a checked frame to the feeders, follows each advance until the move is over and stops everything by itself when the server is lost. All of it is tried against a simulator; the firmware and the hardware are not written.",
+  "tagline": "The node of the tape feeders of a pick-and-place machine: advance, count, jam checks, a safe state, three buses.",
+  "description": "EH3D-NODE-PNP-FEEDER is the logic of the node that stands between the server and a chain of up to 32 tape feeders. The server asks over HTTP with a token; the node speaks a checked frame to the feeders over RS-485, CAN or I2C, as the settings say, follows each advance until the move is over and stops everything by itself when the server is lost. All of it is tried against a simulator; the firmware and the hardware are not written.",
   "columns": [
     "WHO USES IT",
     "THIS REPOSITORY",
@@ -84,6 +84,16 @@
       ]
     },
     {
+      "id": "bus",
+      "column": 1,
+      "level": "tested",
+      "title": "RS-485, CAN, I2C",
+      "lines": [
+        "one frame on three simulated",
+        "buses; faults; 32 feeders"
+      ]
+    },
+    {
       "id": "base",
       "column": 2,
       "level": "contract",
@@ -113,7 +123,7 @@
       "level": "untested",
       "title": "Motor, sensors, bus",
       "lines": [
-        "drivers and the RS-485 line:",
+        "drivers and the wire of the bus:",
         "not written, never run"
       ]
     }
@@ -137,6 +147,11 @@
     },
     {
       "from": "settings",
+      "to": "bus",
+      "level": "tested"
+    },
+    {
+      "from": "settings",
       "to": "unit",
       "level": "tested"
     },
@@ -152,6 +167,11 @@
     },
     {
       "from": "unit",
+      "to": "hardware",
+      "level": "untested"
+    },
+    {
+      "from": "bus",
       "to": "hardware",
       "level": "untested"
     }

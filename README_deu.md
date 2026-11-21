@@ -12,14 +12,14 @@
   <img src="https://img.shields.io/badge/License-GPL%203.0--or--later-blue.svg" alt="GPL 3.0 or later">
   <img src="https://img.shields.io/badge/Stack-C%2B%2B17%20%2B%20Python-blue.svg" alt="C++17 and Python">
   <img src="https://img.shields.io/badge/Languages-8-00E5FF.svg" alt="Languages">
-  <img src="https://img.shields.io/badge/Tests-68-2EA043.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-102-2EA043.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.0.1-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-scaffolding-FFB020.svg" alt="Maturity">
 </p>
 
 ---
 
-**Ehrlichkeitscheck - was heute tatsächlich läuft:** ein Gerüst mit echter, getesteter Logik und ohne Hardware. Die Regeln des Knotens laufen auf einem Rechner gegen einen Simulator (68 Tests bestehen), aber nichts davon wurde als Firmware gebaut, geflasht oder mit einem Motor, einem Gurtsensor oder einem Zuführerbus verbunden.
+**Ehrlichkeitscheck - was heute tatsächlich läuft:** ein Gerüst mit echter, getesteter Logik und ohne Hardware. Die Regeln des Knotens laufen auf einem Rechner gegen einen Simulator (102 Tests bestehen), aber nichts davon wurde als Firmware gebaut, geflasht oder mit einem Motor, einem Gurtsensor oder einem Zuführerbus verbunden.
 
 ---
 
@@ -31,7 +31,7 @@
 |---|---|
 | Version | `0.0.1` |
 | Reifegrad | Gerüst |
-| Tests | 68 |
+| Tests | 102 |
 | Technologie-Stack | C++17 (host tests), Python 3.10+ |
 | Auf echter Hardware | Noch nicht auf Hardware ausgeführt |
 
@@ -45,7 +45,7 @@ Jede Zeile ist ein Teil dieses Repositorys, und die Ampel sagt, wie weit er heut
 
 | Bereich | Stand | Was das hier bedeutet |
 |---|---|---|
-| Logik und Simulator | 🟡 | Die Regeln des Knotens laufen gegen einen Simulator mit festem Seed; 68 Tests bestehen auf einem Rechner. |
+| Logik und Simulator | 🟡 | Die Regeln des Knotens laufen gegen einen Simulator mit festem Seed; 102 Tests bestehen auf einem Rechner. |
 | Netzwerkvertrag | 🟡 | Die Worte des Knotens stehen in docs/CONTRACT.md und ein Test schlägt fehl, wenn Seite und Antworten abweichen; das Plugin des Servers nutzt diesen Knoten noch nicht. |
 | Firmware | 🟠 | Die Firmware für die Platine ist noch nicht geschrieben: nur die einfachen Helfer der gemeinsamen Basis sind importiert. |
 | Echte Hardware | 🔴 | Auf einem Motor, einem Gurtsensor oder einem Zuführerbus ist noch nichts gelaufen. |
@@ -53,6 +53,7 @@ Jede Zeile ist ein Teil dieses Repositorys, und die Ampel sagt, wie weit er heut
 ## 🎯 Überblick
 
 * **Ein Knoten, eine Kette von Zuführern:** er schiebt den Gurt jedes Zuführers um einen Schritt von 2, 4, 8, 12 oder 16 mm vor, zählt die Teile, prüft Tasche, Zug und Deckfolie, hält bei einem Gurtstau einen Fehler und hält von selbst an, wenn er den Knoten oder den Server verliert.
+* **Drei Busse, ein Rahmen:** derselbe Rahmen `eh3d.feeder/1` läuft über RS-485 (mit der Richtungsleitung des Transceivers), CAN (in Stücken von sieben Bytes) oder I2C (mit 7-Bit-Adressen), gewählt in `feeder.cfg`, mit bis zu 32 Zuführern an jedem; jeder Bus wird gegen einen Simulator mit verlorenen, beschädigten, verspäteten und kollidierenden Rahmen getestet.
 
 ## 🧩 Rolle in EH3D
 
@@ -76,7 +77,7 @@ Die Sicherheitsregeln dieses Knotens; der Test, der jede zeigt, ist in docs/REQU
 
 ## 🔌 Schnittstellen
 
-Server, Programme und Telefone sprechen mit dem Knoten über HTTP wie die anderen Knoten der Suite (JSON und ein Bearer-Token); der Knoten spricht mit seinen Zuführern über einen seriellen Bus mit dem Rahmen `eh3d.feeder/1`. Die Seite [docs/CONTRACT.md](docs/CONTRACT.md) ist der Vertrag und ein Test hält sie mit den Antworten gleich.
+Server, Programme und Telefone sprechen mit dem Knoten über HTTP wie die anderen Knoten der Suite (JSON und ein Bearer-Token); der Knoten spricht mit seinen Zuführern über RS-485, CAN oder I2C (die Einstellung `bus` wählt) mit dem Rahmen `eh3d.feeder/1`. Die Seite [docs/CONTRACT.md](docs/CONTRACT.md) ist der Vertrag und ein Test hält sie mit den Antworten gleich.
 
 ```text
 GET  /api/status                         the node and all its feeders (always answered)
@@ -109,7 +110,7 @@ python -I -m unittest discover -s tools -p "test_*.py"
 
 ## 🧪 Tests
 
-68 Tests: C++-Tests auf dem Rechner mit festem Seed (sie lassen den Simulator und die Netzwerkworte laufen und vergleichen die Vertragsseite mit den Antworten) und Python-Tests des Repositorys. Die CI führt die C++-Tests auch mit AddressSanitizer und UBSan aus.
+102 Tests: C++-Tests auf dem Rechner mit festem Seed (sie lassen den Simulator und die Netzwerkworte laufen und vergleichen die Vertragsseite mit den Antworten) und Python-Tests des Repositorys. Die CI führt die C++-Tests auch mit AddressSanitizer und UBSan aus.
 
 ## 🏗️ Build und Veröffentlichung
 
@@ -131,13 +132,15 @@ EH3D-NODE-PNP-FEEDER/
 │   ├── feeder_frame.hpp                                                                                                                     der Rahmen des Kettenbusses mit seiner Prüfung
 │   ├── feeder_unit.hpp                                                                                                                      was ein Zuführer mit dem Gurt tut
 │   ├── feeder_chain.hpp                                                                                                                     die Knotenseite der Kette: Wiederholungen, Erkennung, Vorschub
+│   ├── feeder_transport.hpp                                                                                                                 der Rahmen auf RS-485, CAN und I2C: Adressen, Teile, Fehler, Grenzen
 │   ├── feeder_node.hpp version.hpp                                                                                                          die Worte des Knotens im Netzwerk
-│   ├── feeder_sim.hpp                                                                                                                       eine Zuführerkette auf einem Rechner, für Tests
+│   ├── feeder_sim.hpp                                                                                                                       eine Kette am Rechner: Gurt, Sensoren, einer von drei Bussen mit Fehlern
 │   └── json.hpp auth.hpp semver.hpp backoff.hpp task_health.hpp stored_load.hpp memory_budget.hpp net_text.hpp node_id.hpp civil_time.hpp   einfache Helfer, die alle Knoten teilen und ein Werkzeug gleich hält
 ├── tests/
 │   ├── check.hpp CMakeLists.txt                                                                                                             der Rahmen der Tests und wie sie gebaut werden
 │   ├── test_frame.cpp                                                                                                                       Rahmen, Prüfung und Rauschen; die Einstellungsdatei
 │   ├── test_unit.cpp                                                                                                                        der Zuführer an einem simulierten Gurt: Staus, Zug, Folie, Taschen, Busfehler
+│   ├── test_bus.cpp                                                                                                                         die drei Busse: Einstellungen, Grenzen, CAN-Teile, I2C-Adressen, Fehler
 │   └── test_node.cpp                                                                                                                        die Netzwerkworte, das Token, der sichere Zustand und die Vertragsseite
 ├── docs/
 │   ├── CONTRACT.md                                                                                                                          was der Knoten im Netzwerk (und in der Kette) sagt

@@ -12,14 +12,14 @@
   <img src="https://img.shields.io/badge/License-GPL%203.0--or--later-blue.svg" alt="GPL 3.0 or later">
   <img src="https://img.shields.io/badge/Stack-C%2B%2B17%20%2B%20Python-blue.svg" alt="C++17 and Python">
   <img src="https://img.shields.io/badge/Languages-8-00E5FF.svg" alt="Languages">
-  <img src="https://img.shields.io/badge/Tests-68-2EA043.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-102-2EA043.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.0.1-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-scaffolding-FFB020.svg" alt="Maturity">
 </p>
 
 ---
 
-**Verificação de honestidade - o que funciona hoje:** uma estrutura inicial com lógica real e testada e sem hardware. As regras do nó correm num computador contra um simulador (68 testes passam), mas nada aqui foi compilado como firmware, gravado ou ligado a um motor, um sensor de fita ou um barramento de alimentadores.
+**Verificação de honestidade - o que funciona hoje:** uma estrutura inicial com lógica real e testada e sem hardware. As regras do nó correm num computador contra um simulador (102 testes passam), mas nada aqui foi compilado como firmware, gravado ou ligado a um motor, um sensor de fita ou um barramento de alimentadores.
 
 ---
 
@@ -31,7 +31,7 @@
 |---|---|
 | Versão | `0.0.1` |
 | Maturidade | Estrutura inicial |
-| Testes | 68 |
+| Testes | 102 |
 | Tecnologias | C++17 (host tests), Python 3.10+ |
 | Em hardware real | Ainda não executado em hardware |
 
@@ -45,7 +45,7 @@ Cada linha é uma parte deste repositório e a luz diz até onde chega hoje. É 
 
 | Área | Estado | O que significa aqui |
 |---|---|---|
-| Lógica e simulador | 🟡 | As regras do nó correm contra um simulador com semente fixa; 68 testes passam num computador. |
+| Lógica e simulador | 🟡 | As regras do nó correm contra um simulador com semente fixa; 102 testes passam num computador. |
 | Contrato de rede | 🟡 | As palavras do nó estão escritas em docs/CONTRACT.md e um teste falha quando a página e as respostas diferem; o plugin do servidor ainda não usa este nó. |
 | Firmware | 🟠 | O firmware da placa ainda não está escrito: só foram importados os auxiliares simples da base partilhada. |
 | Hardware real | 🔴 | Nada correu em um motor, um sensor de fita ou um barramento de alimentadores. |
@@ -53,6 +53,7 @@ Cada linha é uma parte deste repositório e a luz diz até onde chega hoje. É 
 ## 🎯 Visão geral
 
 * **Um nó, uma cadeia de alimentadores:** avança a fita de cada alimentador um passo de 2, 4, 8, 12 ou 16 mm, conta as peças, verifica o alvéolo, a tensão e a película de cobertura, mantém uma falha quando a fita encrava e pára sozinho se perder o nó ou o servidor.
+* **Três barramentos, uma trama:** a mesma trama `eh3d.feeder/1` segue por RS-485 (com a linha de direção do transcetor), CAN (em partes de sete bytes) ou I2C (com endereços de 7 bits), à escolha em `feeder.cfg`, com até 32 alimentadores em qualquer um; cada barramento é testado contra um simulador com tramas perdidas, danificadas, atrasadas e em colisão.
 
 ## 🧩 Papel no EH3D
 
@@ -76,7 +77,7 @@ As regras de segurança deste nó; o teste que mostra cada uma está nomeado em 
 
 ## 🔌 Interfaces
 
-O servidor, os programas e os telemóveis falam com o nó por HTTP como os outros nós da suite (JSON e um token bearer); o nó fala com os seus alimentadores por um barramento série com a trama `eh3d.feeder/1`. A página [docs/CONTRACT.md](docs/CONTRACT.md) é o contrato e um teste mantém-na igual às respostas.
+O servidor, os programas e os telemóveis falam com o nó por HTTP como os outros nós da suite (JSON e um token bearer); o nó fala com os seus alimentadores por RS-485, CAN ou I2C (escolhido pela definição `bus`) com a trama `eh3d.feeder/1`. A página [docs/CONTRACT.md](docs/CONTRACT.md) é o contrato e um teste mantém-na igual às respostas.
 
 ```text
 GET  /api/status                         the node and all its feeders (always answered)
@@ -109,7 +110,7 @@ python -I -m unittest discover -s tools -p "test_*.py"
 
 ## 🧪 Testes
 
-68 testes: testes de C++ no computador com semente fixa (executam o simulador e as palavras da rede e comparam a página do contrato com as respostas) e testes de Python do repositório. A CI também executa os de C++ com AddressSanitizer e UBSan.
+102 testes: testes de C++ no computador com semente fixa (executam o simulador e as palavras da rede e comparam a página do contrato com as respostas) e testes de Python do repositório. A CI também executa os de C++ com AddressSanitizer e UBSan.
 
 ## 🏗️ Compilação e publicação
 
@@ -131,13 +132,15 @@ EH3D-NODE-PNP-FEEDER/
 │   ├── feeder_frame.hpp                                                                                                                     a trama do barramento da cadeia, com a sua verificação
 │   ├── feeder_unit.hpp                                                                                                                      o que um alimentador faz com a fita
 │   ├── feeder_chain.hpp                                                                                                                     o lado do nó na cadeia: repetições, descoberta, avanço
+│   ├── feeder_transport.hpp                                                                                                                 a trama em RS-485, CAN e I2C: endereços, partes, falhas, limites
 │   ├── feeder_node.hpp version.hpp                                                                                                          as palavras do nó na rede
-│   ├── feeder_sim.hpp                                                                                                                       uma cadeia de alimentadores num computador, para testes
+│   ├── feeder_sim.hpp                                                                                                                       uma cadeia no computador: fita, sensores, um de três barramentos com falhas
 │   └── json.hpp auth.hpp semver.hpp backoff.hpp task_health.hpp stored_load.hpp memory_budget.hpp net_text.hpp node_id.hpp civil_time.hpp   auxiliares simples partilhados pelos nós, mantidos iguais por uma ferramenta
 ├── tests/
 │   ├── check.hpp CMakeLists.txt                                                                                                             a estrutura dos testes e como se compilam
 │   ├── test_frame.cpp                                                                                                                       tramas, verificação e ruído; o ficheiro de definições
 │   ├── test_unit.cpp                                                                                                                        o alimentador numa fita simulada: encravamentos, tensão, película, alvéolos, falhas do barramento
+│   ├── test_bus.cpp                                                                                                                         os três barramentos: definições, limites, partes CAN, endereços I2C, falhas
 │   └── test_node.cpp                                                                                                                        as palavras da rede, o token, o estado seguro e a página do contrato
 ├── docs/
 │   ├── CONTRACT.md                                                                                                                          o que o nó diz na rede (e na cadeia)

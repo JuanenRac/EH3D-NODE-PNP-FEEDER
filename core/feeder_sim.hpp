@@ -11,19 +11,9 @@
 #include <vector>
 
 #include "feeder_chain.hpp"
+#include "feeder_transport.hpp"
 
 namespace pnp_feeder {
-
-/// A small generator with a seed (xorshift32): the same seed gives the same run.
-class Rng {
-public:
-    explicit Rng(std::uint32_t seed) : s_(seed == 0 ? 0x9E3779B9u : seed) {}
-    std::uint32_t next() { s_ ^= s_ << 13; s_ ^= s_ >> 17; s_ ^= s_ << 5; return s_; }
-    /// True with the chance of `permille` in a thousand.
-    bool chance(int permille) { return static_cast<int>(next() % 1000u) < permille; }
-private:
-    std::uint32_t s_;
-};
 
 struct SimTape {
     double pos_mm = 0;          // how far the tape has gone
@@ -61,9 +51,16 @@ public:
     }
 };
 
-class SimChain : public Bus {
+class SimChain : public Bus, private FrameServer {
+private:
+    std::unique_ptr<Medium> medium_;   // the simulated bus the settings name; declared first because the faults below refer to it
+
 public:
-    SimChain(const Settings& settings, std::uint32_t seed) : rng_(seed) {
+    SimChain(const Settings& settings, std::uint32_t seed)
+        : medium_(make_medium(settings, seed)),
+          drop_permille(medium_->faults.drop_permille),
+          corrupt_permille(medium_->faults.corrupt_permille),
+          cut(medium_->faults.cut) {
         for (int n = 1; n <= settings.slots; ++n) {
             auto u = std::make_unique<SimUnit>(UnitConfig::from(settings), static_cast<std::uint8_t>(n));
             u->tape.pitch_mm = settings.pitch_mm;
@@ -72,37 +69,24 @@ public:
     }
 
     SimUnit& unit(int slot) { return *units_[static_cast<std::size_t>(slot - 1)]; }
+    /// The simulated bus: its `faults` (loss, damage, a late answer, a held bus, a collision, a feeder that holds the clock) and its counters.
+    Medium& medium() { return *medium_; }
 
-    // the faults of the bus
-    int drop_permille = 0;      // the chance (in a thousand) that a frame is lost, each way
-    int corrupt_permille = 0;   // the chance that a byte of a frame is changed, each way
-    bool cut = false;           // the whole bus is cut: nobody answers and nobody hears
+    // the faults of the bus (the same fields as `medium().faults`)
+    int& drop_permille;      // the chance (in a thousand) that a frame is lost, each way
+    int& corrupt_permille;   // the chance that a byte of a frame is changed, each way
+    bool& cut;               // the whole bus is cut: nobody answers and nobody hears
 
     std::vector<std::uint8_t> exchange(const std::vector<std::uint8_t>& request, std::uint32_t timeout_ms) override {
-        (void)timeout_ms;
         wait(2);  // a frame takes some time to go and come back
-        if (cut) return {};
-        std::vector<std::uint8_t> sent = request;
-        if (rng_.chance(drop_permille)) return {};
-        if (rng_.chance(corrupt_permille)) sent[rng_.next() % sent.size()] ^= static_cast<std::uint8_t>(1u << (rng_.next() % 8u));
-        Decoder d;
-        d.push(sent);
-        Frame f;
-        std::vector<std::uint8_t> back;
-        while (d.next(f)) {
-            for (auto& u : units_) {
-                if (u->silent) continue;
-                Frame reply;
-                if (u->unit.handle(f, now_, reply)) {
-                    std::vector<std::uint8_t> bytes = encode(reply);
-                    if (rng_.chance(drop_permille)) continue;
-                    if (rng_.chance(corrupt_permille)) bytes[rng_.next() % bytes.size()] ^= static_cast<std::uint8_t>(1u << (rng_.next() % 8u));
-                    back.insert(back.end(), bytes.begin(), bytes.end());
-                }
-            }
-        }
+        std::uint32_t us = 0;
+        std::vector<std::uint8_t> back = medium_->transfer(request, *this, timeout_ms, us);
+        const std::uint32_t ms = (us + 999u) / 1000u;
+        if (ms > 2) wait(ms - 2);  // the rest of the time the frames took on the wire
         return back;
     }
+
+    LinkStats link_stats() const override { return medium_->stats(); }
 
     void wait(std::uint32_t ms) override {
         while (ms > 0) {
@@ -116,7 +100,15 @@ public:
     std::uint32_t now_ms() const override { return now_; }
 
 private:
-    Rng rng_;
+    bool present(std::uint8_t addr) const override { return addr >= 1 && addr <= units_.size() && !units_[static_cast<std::size_t>(addr) - 1]->silent; }
+    void serve(const Frame& request, std::vector<Frame>& replies) override {
+        for (auto& u : units_) {
+            if (u->silent) continue;
+            Frame reply;
+            if (u->unit.handle(request, now_, reply)) replies.push_back(reply);
+        }
+    }
+
     std::vector<std::unique_ptr<SimUnit>> units_;
     std::uint32_t now_ = 1000;
 };

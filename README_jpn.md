@@ -12,14 +12,14 @@
   <img src="https://img.shields.io/badge/License-GPL%203.0--or--later-blue.svg" alt="GPL 3.0 or later">
   <img src="https://img.shields.io/badge/Stack-C%2B%2B17%20%2B%20Python-blue.svg" alt="C++17 and Python">
   <img src="https://img.shields.io/badge/Languages-8-00E5FF.svg" alt="Languages">
-  <img src="https://img.shields.io/badge/Tests-68-2EA043.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-102-2EA043.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.0.1-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-scaffolding-FFB020.svg" alt="Maturity">
 </p>
 
 ---
 
-**正直さの確認 - 今日実際に動くもの：** 実際にテストされたロジックを持つが、ハードウェアはない骨組みです。ノードの規則はコンピュータ上でシミュレータに対して動作します（68 件のテストが成功）が、ここにあるものはファームウェアとしてビルドされたことも、書き込まれたことも、モーター、テープセンサー、フィーダーのバスに接続されたこともありません。
+**正直さの確認 - 今日実際に動くもの：** 実際にテストされたロジックを持つが、ハードウェアはない骨組みです。ノードの規則はコンピュータ上でシミュレータに対して動作します（102 件のテストが成功）が、ここにあるものはファームウェアとしてビルドされたことも、書き込まれたことも、モーター、テープセンサー、フィーダーのバスに接続されたこともありません。
 
 ---
 
@@ -31,7 +31,7 @@
 |---|---|
 | バージョン | `0.0.1` |
 | 成熟度 | 足場 |
-| テスト | 68 |
+| テスト | 102 |
 | 技術スタック | C++17 (host tests), Python 3.10+ |
 | 実機での動作 | まだハードウェアでは実行していません |
 
@@ -45,7 +45,7 @@
 
 | 領域 | 状態 | ここでの意味 |
 |---|---|---|
-| ロジックとシミュレータ | 🟡 | ノードの規則は固定シードのシミュレータに対して動作し、68 件のテストがコンピュータ上で成功します。 |
+| ロジックとシミュレータ | 🟡 | ノードの規則は固定シードのシミュレータに対して動作し、102 件のテストがコンピュータ上で成功します。 |
 | ネットワーク契約 | 🟡 | ノードの語は docs/CONTRACT.md に書かれており、ページと応答が異なるとテストが失敗します。サーバーのプラグインはまだこのノードを使っていません。 |
 | ファームウェア | 🟠 | ボード用のファームウェアはまだ書かれていません。共有ベースの単純な補助部分だけを取り込んでいます。 |
 | 実機ハードウェア | 🔴 | モーター、テープセンサー、フィーダーのバスでは何も動いていません。 |
@@ -53,6 +53,7 @@
 ## 🎯 概要
 
 * **1 つのノード、フィーダーのチェーン：** 各フィーダーのテープを 2、4、8、12、16 mm のピッチで送り、部品を数え、ポケット・張力・カバーフィルムを確認し、テープが詰まるとエラーを保持し、ノードやサーバーを失うと自分で停止します。
+* **3 種のバス、1 つのフレーム：** 同じフレーム `eh3d.feeder/1` が、`feeder.cfg` で選んだ RS-485（トランシーバーの方向制御線付き）、CAN（7 バイトずつに分割）、I2C（7 ビットアドレス）のいずれかで流れ、どれでも最大 32 台のフィーダーを接続できます。各バスは、欠落・破損・遅延・衝突したフレームを出すシミュレーターで試されています。
 
 ## 🧩 EH3D での役割
 
@@ -76,7 +77,7 @@
 
 ## 🔌 インターフェース
 
-サーバー、プログラム、スマートフォンは、スイートの他のノードと同じ方法（JSON とベアラートークン）で HTTP によりノードと通信します。ノードはフレーム `eh3d.feeder/1` を使ってシリアルバスでフィーダーと通信します。ページ [docs/CONTRACT.md](docs/CONTRACT.md) が契約であり、テストが応答との一致を保ちます。
+サーバー、プログラム、スマートフォンは、スイートの他のノードと同じ方法（JSON とベアラートークン）で HTTP によりノードと通信します。ノードは設定 `bus` で選んだ RS-485、CAN、I2C のいずれかで、フレーム `eh3d.feeder/1` を使ってフィーダーと通信します。ページ [docs/CONTRACT.md](docs/CONTRACT.md) が契約であり、テストが応答との一致を保ちます。
 
 ```text
 GET  /api/status                         the node and all its feeders (always answered)
@@ -109,7 +110,7 @@ python -I -m unittest discover -s tools -p "test_*.py"
 
 ## 🧪 テスト
 
-68 件のテスト：固定シードの C++ ホストテスト（シミュレータとネットワークの語を動かし、契約ページと応答を比較）と、リポジトリの Python テストです。CI は C++ テストを AddressSanitizer と UBSan でも実行します。
+102 件のテスト：固定シードの C++ ホストテスト（シミュレータとネットワークの語を動かし、契約ページと応答を比較）と、リポジトリの Python テストです。CI は C++ テストを AddressSanitizer と UBSan でも実行します。
 
 ## 🏗️ ビルドとリリース
 
@@ -131,13 +132,15 @@ EH3D-NODE-PNP-FEEDER/
 │   ├── feeder_frame.hpp                                                                                                                     チェーンバスのフレームとその検査
 │   ├── feeder_unit.hpp                                                                                                                      フィーダー 1 台がテープに対して行うこと
 │   ├── feeder_chain.hpp                                                                                                                     チェーンのノード側：再送、検出、送り
+│   ├── feeder_transport.hpp                                                                                                                 RS-485・CAN・I2C 上のフレーム：アドレス、分割、障害、上限
 │   ├── feeder_node.hpp version.hpp                                                                                                          ネットワーク上のノードの語
-│   ├── feeder_sim.hpp                                                                                                                       試験用のコンピュータ上のフィーダーチェーン
+│   ├── feeder_sim.hpp                                                                                                                       PC 上のチェーン：テープ、センサー、障害付き 3 種のバスの 1 つ
 │   └── json.hpp auth.hpp semver.hpp backoff.hpp task_health.hpp stored_load.hpp memory_budget.hpp net_text.hpp node_id.hpp civil_time.hpp   ノード間で共有する単純な補助部分。ツールで同一に保つ
 ├── tests/
 │   ├── check.hpp CMakeLists.txt                                                                                                             テストの枠組みとビルド方法
 │   ├── test_frame.cpp                                                                                                                       フレーム、検査、ノイズ、設定ファイル
 │   ├── test_unit.cpp                                                                                                                        模擬テープ上のフィーダー：詰まり、張力、フィルム、ポケット、バス障害
+│   ├── test_bus.cpp                                                                                                                         3 種のバス：設定、上限、CAN の分割、I2C アドレス、障害
 │   └── test_node.cpp                                                                                                                        ネットワークの語、トークン、安全状態、契約ページ
 ├── docs/
 │   ├── CONTRACT.md                                                                                                                          ノードがネットワーク（とチェーン）上で伝えること

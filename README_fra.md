@@ -12,14 +12,14 @@
   <img src="https://img.shields.io/badge/License-GPL%203.0--or--later-blue.svg" alt="GPL 3.0 or later">
   <img src="https://img.shields.io/badge/Stack-C%2B%2B17%20%2B%20Python-blue.svg" alt="C++17 and Python">
   <img src="https://img.shields.io/badge/Languages-8-00E5FF.svg" alt="Languages">
-  <img src="https://img.shields.io/badge/Tests-68-2EA043.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-102-2EA043.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.0.1-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-scaffolding-FFB020.svg" alt="Maturity">
 </p>
 
 ---
 
-**Vérification d'honnêteté - ce qui tourne aujourd'hui :** un squelette avec une logique réelle et testée et sans matériel. Les règles du nœud s'exécutent sur un ordinateur contre un simulateur (68 tests réussis), mais rien ici n'a été compilé en firmware, flashé ni relié à un moteur, un capteur de bande ou un bus d'alimentateurs.
+**Vérification d'honnêteté - ce qui tourne aujourd'hui :** un squelette avec une logique réelle et testée et sans matériel. Les règles du nœud s'exécutent sur un ordinateur contre un simulateur (102 tests réussis), mais rien ici n'a été compilé en firmware, flashé ni relié à un moteur, un capteur de bande ou un bus d'alimentateurs.
 
 ---
 
@@ -31,7 +31,7 @@
 |---|---|
 | Version | `0.0.1` |
 | Maturité | Échafaudage |
-| Tests | 68 |
+| Tests | 102 |
 | Pile technique | C++17 (host tests), Python 3.10+ |
 | Sur du matériel réel | Pas encore exécuté sur du matériel |
 
@@ -45,7 +45,7 @@ Chaque ligne est une partie de ce dépôt et le feu dit où elle en est aujourd'
 
 | Domaine | État | Ce que cela veut dire ici |
 |---|---|---|
-| Logique et simulateur | 🟡 | Les règles du nœud s'exécutent contre un simulateur à graine fixe ; 68 tests réussissent sur un ordinateur. |
+| Logique et simulateur | 🟡 | Les règles du nœud s'exécutent contre un simulateur à graine fixe ; 102 tests réussissent sur un ordinateur. |
 | Contrat réseau | 🟡 | Les mots du nœud sont écrits dans docs/CONTRACT.md et un test échoue quand la page et les réponses diffèrent ; le plugin du serveur n'utilise pas encore ce nœud. |
 | Firmware | 🟠 | Le firmware de la carte n'est pas encore écrit : seuls les utilitaires simples de la base commune sont importés. |
 | Matériel réel | 🔴 | Rien n'a tourné sur un moteur, un capteur de bande ou un bus d'alimentateurs. |
@@ -53,6 +53,7 @@ Chaque ligne est une partie de ce dépôt et le feu dit où elle en est aujourd'
 ## 🎯 Présentation
 
 * **Un nœud, une chaîne d'alimentateurs :** il avance la bande de chaque alimentateur d'un pas de 2, 4, 8, 12 ou 16 mm, compte les pièces, vérifie l'alvéole, la tension et le film de couverture, retient un défaut quand la bande se bloque et s'arrête seul s'il perd le nœud ou le serveur.
+* **Trois bus, une trame :** la même trame `eh3d.feeder/1` passe par RS-485 (avec la ligne de direction du transcepteur), CAN (en morceaux de sept octets) ou I2C (avec des adresses de 7 bits), au choix dans `feeder.cfg`, avec jusqu'à 32 alimentateurs sur chacun ; chaque bus est essayé contre un simulateur avec des trames perdues, abîmées, en retard et en collision.
 
 ## 🧩 Rôle dans EH3D
 
@@ -76,7 +77,7 @@ Les règles de sûreté et de sécurité de ce nœud ; le test qui montre chacun
 
 ## 🔌 Interfaces
 
-Le serveur, les programmes et les téléphones parlent au nœud en HTTP comme les autres nœuds de la suite (JSON et un jeton bearer) ; le nœud parle à ses alimentateurs par un bus série avec la trame `eh3d.feeder/1`. La page [docs/CONTRACT.md](docs/CONTRACT.md) est le contrat et un test la garde identique aux réponses.
+Le serveur, les programmes et les téléphones parlent au nœud en HTTP comme les autres nœuds de la suite (JSON et un jeton bearer) ; le nœud parle à ses alimentateurs par RS-485, CAN ou I2C (le réglage `bus` choisit) avec la trame `eh3d.feeder/1`. La page [docs/CONTRACT.md](docs/CONTRACT.md) est le contrat et un test la garde identique aux réponses.
 
 ```text
 GET  /api/status                         the node and all its feeders (always answered)
@@ -109,7 +110,7 @@ python -I -m unittest discover -s tools -p "test_*.py"
 
 ## 🧪 Tests
 
-68 tests : tests C++ sur ordinateur à graine fixe (ils font tourner le simulateur et les mots du réseau et comparent la page du contrat aux réponses) et tests Python du dépôt. La CI exécute aussi les tests C++ avec AddressSanitizer et UBSan.
+102 tests : tests C++ sur ordinateur à graine fixe (ils font tourner le simulateur et les mots du réseau et comparent la page du contrat aux réponses) et tests Python du dépôt. La CI exécute aussi les tests C++ avec AddressSanitizer et UBSan.
 
 ## 🏗️ Compilation et publication
 
@@ -131,13 +132,15 @@ EH3D-NODE-PNP-FEEDER/
 │   ├── feeder_frame.hpp                                                                                                                     la trame du bus de la chaîne, avec son contrôle
 │   ├── feeder_unit.hpp                                                                                                                      ce que fait un alimentateur de la bande
 │   ├── feeder_chain.hpp                                                                                                                     le côté nœud de la chaîne : répétitions, découverte, avance
+│   ├── feeder_transport.hpp                                                                                                                 la trame sur RS-485, CAN et I2C : adresses, morceaux, pannes, limites
 │   ├── feeder_node.hpp version.hpp                                                                                                          les mots du nœud sur le réseau
-│   ├── feeder_sim.hpp                                                                                                                       une chaîne d'alimentateurs sur un ordinateur, pour les tests
+│   ├── feeder_sim.hpp                                                                                                                       une chaîne sur ordinateur : bande, capteurs, un des trois bus avec pannes
 │   └── json.hpp auth.hpp semver.hpp backoff.hpp task_health.hpp stored_load.hpp memory_budget.hpp net_text.hpp node_id.hpp civil_time.hpp   utilitaires simples partagés par les nœuds, gardés identiques par un outil
 ├── tests/
 │   ├── check.hpp CMakeLists.txt                                                                                                             le cadre des tests et leur compilation
 │   ├── test_frame.cpp                                                                                                                       trames, contrôle et bruit ; le fichier de réglages
 │   ├── test_unit.cpp                                                                                                                        l'alimentateur sur une bande simulée : bourrages, tension, film, alvéoles, pannes du bus
+│   ├── test_bus.cpp                                                                                                                         les trois bus : réglages, limites, morceaux CAN, adresses I2C, pannes
 │   └── test_node.cpp                                                                                                                        les mots du réseau, le jeton, l'état sûr et la page du contrat
 ├── docs/
 │   ├── CONTRACT.md                                                                                                                          ce que dit le nœud sur le réseau (et sur la chaîne)

@@ -7,7 +7,7 @@ Nothing in this page has been built or tried: it is the preliminary shape of the
 | Part | What it is for | What it could be | Verified |
 |---|---|---|---|
 | Controller board | The node of the chain: network, the bus and the logic | an ESP32-S3 module, as in the other nodes of the suite | no |
-| Bus transceiver | Talks to the feeders over the serial bus, with a direction line | an RS-485 transceiver and its termination | no |
+| Bus transceiver | Talks to the feeders over the bus chosen in the settings (`bus` = `rs485`, `can` or `i2c`) | for RS-485, a transceiver with a direction line (DE/RE) and a termination at both ends; for CAN, a transceiver and a termination at both ends; for I2C, the lines of the controller with pull-ups and no transceiver | no |
 | Feeder board | One per feeder: a small microcontroller, the driver of the motor and the sensors | the firmware of a feeder is the `Unit` of `core/feeder_unit.hpp` | no |
 | Motor | Turns the sprocket that advances the tape | a small stepper with a driver, or a servo; the torque needed for a 16 mm tape is not measured | no |
 | Sprocket wheel | Engages the holes of the tape (a 4 mm pitch in the usual standard of embossed tape) | to be drawn; the mechanical parts are CC-BY-SA | no |
@@ -32,6 +32,13 @@ The node is tried on a computer against a simulator. Each test below is what a p
 | F-08 | Stop the polls of the server | The node in its safe state within the server time, and the feeders in theirs a moment later |
 | F-09 | A chain of 32 feeders on a long cable | The rate of damaged frames and of repeats, with the cable at its longest |
 | F-10 | Cut the power during an advance and switch it on again | The feeder wakes up still and holds no stale order |
+| F-11 | RS-485: look at the direction line (DE/RE) and the data line with an oscilloscope while the node sends a frame and the feeder answers | The driver is enabled `rs485_turnaround_us` before the first bit and released after the last stop bit; two drivers are never on the line at once; set the turnaround from what is measured |
+| F-12 | RS-485: a chain of 32 feeders on the longest cable of the machine, at each `rs485_baud` from 115200 up, with the termination at both ends and then without it | The rate of damaged frames and of repeats for each baud rate and cable; the highest rate with no repeats; write down the cable and the termination |
+| F-13 | CAN: a chain of 32 feeders at each `can_bitrate`, on the longest cable, with the termination at both ends | The pieces of every frame arrive in order, no frame is lost, the error counters of the controller stay still; the highest bitrate for the cable; the time of the longest frame with its answer (with bit stuffing) is shorter than `reply_timeout_ms` |
+| F-14 | CAN: two feeders answer at the same moment to a command to all of them, and the node sends while another device talks | The arbitration gives the frames one after the other, no piece is mixed with a piece of another frame, and the node counts the extra time |
+| F-15 | I2C: 32 feeders on the address range from `i2c_base_addr`, at 100 kHz and at 400 kHz, with the pull-ups of the board | The capacitance of the lines and the rise time with all 32 on; the fastest clock with no repeats; no address answered by two feeders; the feeders keep to the reserved addresses |
+| F-16 | I2C: a feeder holds the clock while its motor driver is busy | The longest time the clock is held, and that `i2c_stretch_limit_us` is above it; a feeder unplugged is a NACK of its address, seen as offline after `offline_after` tries |
+| F-17 | The same 100 advances of F-01 with each of the three settings of `bus` on the same feeders | The same tape moves in each; write down the repeats, the offline events and the time of the advance for each bus; the choice of the bus for a machine is made from this table |
 
 ## Licences
 

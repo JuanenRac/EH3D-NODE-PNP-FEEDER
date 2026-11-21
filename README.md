@@ -12,14 +12,14 @@
   <img src="https://img.shields.io/badge/License-GPL%203.0--or--later-blue.svg" alt="GPL 3.0 or later">
   <img src="https://img.shields.io/badge/Stack-C%2B%2B17%20%2B%20Python-blue.svg" alt="C++17 and Python">
   <img src="https://img.shields.io/badge/Languages-8-00E5FF.svg" alt="Languages">
-  <img src="https://img.shields.io/badge/Tests-68-2EA043.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-102-2EA043.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.0.1-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-scaffolding-FFB020.svg" alt="Maturity">
 </p>
 
 ---
 
-**Honesty check - what actually runs today:** a scaffold with real, tested logic and no hardware. The rules of the node run on a computer against a simulator (68 tests pass), but nothing here has been built into firmware, flashed or connected to a motor, a tape sensor or a bus of feeders.
+**Honesty check - what actually runs today:** a scaffold with real, tested logic and no hardware. The rules of the node run on a computer against a simulator (102 tests pass), but nothing here has been built into firmware, flashed or connected to a motor, a tape sensor or a bus of feeders.
 
 ---
 
@@ -31,7 +31,7 @@
 |---|---|
 | Version | `0.0.1` |
 | Maturity | Scaffolding |
-| Tests | 68 |
+| Tests | 102 |
 | Stack | C++17 (host tests), Python 3.10+ |
 | On real hardware | Not run on hardware yet |
 
@@ -45,7 +45,7 @@ Each line is one part of this repository and the light says how far it is today.
 
 | Area | State | What it means here |
 |---|---|---|
-| Logic and simulator | 🟡 | The rules of the node run against a simulator with a fixed seed; 68 tests pass on a computer. |
+| Logic and simulator | 🟡 | The rules of the node run against a simulator with a fixed seed; 102 tests pass on a computer. |
 | Network contract | 🟡 | The words of the node are written in docs/CONTRACT.md and a test fails when the page and the answers differ; the server's plugin does not use this node yet. |
 | Firmware | 🟠 | The firmware for the board is not written yet: only the plain helpers of the shared base are imported. |
 | Real hardware | 🔴 | Nothing has run on a motor, a tape sensor or a bus of feeders. |
@@ -53,6 +53,7 @@ Each line is one part of this repository and the light says how far it is today.
 ## 🎯 Overview
 
 * **One node, a chain of feeders:** it advances the tape of each feeder by a pitch of 2, 4, 8, 12 or 16 mm, counts the parts, checks the pocket, the tension and the cover film, holds a fault when the tape jams and stops by itself when it loses the node or the server.
+* **Three buses, one frame:** the same frame `eh3d.feeder/1` goes over RS-485 (with the direction line of the transceiver), CAN (in pieces of seven bytes) or I2C (with 7-bit addresses), chosen in `feeder.cfg`, with up to 32 feeders on any of them; each bus is tried against a simulator with lost, damaged, late and colliding frames.
 
 ## 🧩 Role in EH3D
 
@@ -76,7 +77,7 @@ The rules of safety and security of this node; the test that shows each one is n
 
 ## 🔌 Interfaces
 
-The server, the programs and the phones talk to the node over HTTP in the way of the other nodes of the suite (JSON and a bearer token); the node talks to its feeders over a serial bus with the frame `eh3d.feeder/1`. The page [docs/CONTRACT.md](docs/CONTRACT.md) is the contract and a test keeps it equal to the answers.
+The server, the programs and the phones talk to the node over HTTP in the way of the other nodes of the suite (JSON and a bearer token); the node talks to its feeders over RS-485, CAN or I2C (the setting `bus` chooses) with the frame `eh3d.feeder/1`. The page [docs/CONTRACT.md](docs/CONTRACT.md) is the contract and a test keeps it equal to the answers.
 
 ```text
 GET  /api/status                         the node and all its feeders (always answered)
@@ -109,7 +110,7 @@ python -I -m unittest discover -s tools -p "test_*.py"
 
 ## 🧪 Testing
 
-68 tests: C++ host tests with a fixed seed (they run the simulator and the words of the network and compare the contract page with the answers) and Python tests of the repository. The CI also runs the C++ tests with AddressSanitizer and UBSan.
+102 tests: C++ host tests with a fixed seed (they run the simulator and the words of the network and compare the contract page with the answers) and Python tests of the repository. The CI also runs the C++ tests with AddressSanitizer and UBSan.
 
 ## 🏗️ Build & Release
 
@@ -131,13 +132,15 @@ EH3D-NODE-PNP-FEEDER/
 │   ├── feeder_frame.hpp                                                                                                                     the frame of the chain bus, with its check
 │   ├── feeder_unit.hpp                                                                                                                      what one feeder does with the tape
 │   ├── feeder_chain.hpp                                                                                                                     the node's side of the chain: repeats, discovery, advance
+│   ├── feeder_transport.hpp                                                                                                                 the frame on RS-485, CAN and I2C: addresses, pieces, faults, limits
 │   ├── feeder_node.hpp version.hpp                                                                                                          the words of the node on the network
-│   ├── feeder_sim.hpp                                                                                                                       a chain of feeders on a computer, for tests
+│   ├── feeder_sim.hpp                                                                                                                       a chain on a computer: tape, sensors, one of three buses with faults
 │   └── json.hpp auth.hpp semver.hpp backoff.hpp task_health.hpp stored_load.hpp memory_budget.hpp net_text.hpp node_id.hpp civil_time.hpp   plain helpers shared by the nodes, kept identical by a tool
 ├── tests/
 │   ├── check.hpp CMakeLists.txt                                                                                                             the harness of the tests and how they are built
 │   ├── test_frame.cpp                                                                                                                       frames, check and noise; the settings file
 │   ├── test_unit.cpp                                                                                                                        the feeder on a simulated tape: jams, tension, film, pockets, bus faults
+│   ├── test_bus.cpp                                                                                                                         the three buses: settings, limits, CAN pieces, I2C addresses, faults
 │   └── test_node.cpp                                                                                                                        the words of the network, the token, the safe state and the contract page
 ├── docs/
 │   ├── CONTRACT.md                                                                                                                          what the node says on the network (and on the chain)

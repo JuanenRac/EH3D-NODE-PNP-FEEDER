@@ -12,14 +12,14 @@
   <img src="https://img.shields.io/badge/License-GPL%203.0--or--later-blue.svg" alt="GPL 3.0 or later">
   <img src="https://img.shields.io/badge/Stack-C%2B%2B17%20%2B%20Python-blue.svg" alt="C++17 and Python">
   <img src="https://img.shields.io/badge/Languages-8-00E5FF.svg" alt="Languages">
-  <img src="https://img.shields.io/badge/Tests-68-2EA043.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-102-2EA043.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.0.1-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-scaffolding-FFB020.svg" alt="Maturity">
 </p>
 
 ---
 
-**Verifica di onestà - cosa funziona oggi:** uno scheletro con logica reale e provata e senza hardware. Le regole del nodo girano su un computer contro un simulatore (68 test superati), ma nulla qui è stato compilato come firmware, scritto su una scheda o collegato a un motore, un sensore di nastro o un bus di alimentatori.
+**Verifica di onestà - cosa funziona oggi:** uno scheletro con logica reale e provata e senza hardware. Le regole del nodo girano su un computer contro un simulatore (102 test superati), ma nulla qui è stato compilato come firmware, scritto su una scheda o collegato a un motore, un sensore di nastro o un bus di alimentatori.
 
 ---
 
@@ -31,7 +31,7 @@
 |---|---|
 | Versione | `0.0.1` |
 | Maturità | Impalcatura |
-| Test | 68 |
+| Test | 102 |
 | Stack tecnologico | C++17 (host tests), Python 3.10+ |
 | Su hardware reale | Non ancora eseguito su hardware |
 
@@ -45,7 +45,7 @@ Ogni riga è una parte di questo repository e il semaforo dice a che punto è og
 
 | Area | Stato | Cosa significa qui |
 |---|---|---|
-| Logica e simulatore | 🟡 | Le regole del nodo girano contro un simulatore con seme fisso; 68 test superati su un computer. |
+| Logica e simulatore | 🟡 | Le regole del nodo girano contro un simulatore con seme fisso; 102 test superati su un computer. |
 | Contratto di rete | 🟡 | Le parole del nodo sono scritte in docs/CONTRACT.md e un test fallisce quando pagina e risposte differiscono; il plugin del server non usa ancora questo nodo. |
 | Firmware | 🟠 | Il firmware della scheda non è ancora scritto: sono importati solo gli aiuti semplici della base condivisa. |
 | Hardware reale | 🔴 | Nulla è girato su un motore, un sensore di nastro o un bus di alimentatori. |
@@ -53,6 +53,7 @@ Ogni riga è una parte di questo repository e il semaforo dice a che punto è og
 ## 🎯 Panoramica
 
 * **Un nodo, una catena di alimentatori:** fa avanzare il nastro di ogni alimentatore di un passo di 2, 4, 8, 12 o 16 mm, conta i pezzi, controlla la tasca, la tensione e la pellicola di copertura, mantiene un guasto se il nastro si inceppa e si ferma da solo se perde il nodo o il server.
+* **Tre bus, un frame:** lo stesso frame `eh3d.feeder/1` passa su RS-485 (con la linea di direzione del transceiver), CAN (in pezzi da sette byte) o I2C (con indirizzi a 7 bit), a scelta in `feeder.cfg`, con fino a 32 alimentatori su ciascuno; ogni bus è provato contro un simulatore con frame persi, danneggiati, in ritardo e in collisione.
 
 ## 🧩 Ruolo in EH3D
 
@@ -76,7 +77,7 @@ Le regole di sicurezza di questo nodo; il test che mostra ciascuna è nominato i
 
 ## 🔌 Interfacce
 
-Il server, i programmi e i telefoni parlano al nodo via HTTP come gli altri nodi della suite (JSON e un token bearer); il nodo parla ai suoi alimentatori su un bus seriale con il frame `eh3d.feeder/1`. La pagina [docs/CONTRACT.md](docs/CONTRACT.md) è il contratto e un test la tiene uguale alle risposte.
+Il server, i programmi e i telefoni parlano al nodo via HTTP come gli altri nodi della suite (JSON e un token bearer); il nodo parla ai suoi alimentatori su RS-485, CAN o I2C (lo sceglie l'impostazione `bus`) con il frame `eh3d.feeder/1`. La pagina [docs/CONTRACT.md](docs/CONTRACT.md) è il contratto e un test la tiene uguale alle risposte.
 
 ```text
 GET  /api/status                         the node and all its feeders (always answered)
@@ -109,7 +110,7 @@ python -I -m unittest discover -s tools -p "test_*.py"
 
 ## 🧪 Test
 
-68 test: test C++ su computer con seme fisso (eseguono il simulatore e le parole della rete e confrontano la pagina del contratto con le risposte) e test Python del repository. La CI esegue i test C++ anche con AddressSanitizer e UBSan.
+102 test: test C++ su computer con seme fisso (eseguono il simulatore e le parole della rete e confrontano la pagina del contratto con le risposte) e test Python del repository. La CI esegue i test C++ anche con AddressSanitizer e UBSan.
 
 ## 🏗️ Compilazione e rilascio
 
@@ -131,13 +132,15 @@ EH3D-NODE-PNP-FEEDER/
 │   ├── feeder_frame.hpp                                                                                                                     il frame del bus della catena, con il suo controllo
 │   ├── feeder_unit.hpp                                                                                                                      cosa fa un alimentatore con il nastro
 │   ├── feeder_chain.hpp                                                                                                                     il lato nodo della catena: ripetizioni, scoperta, avanzamento
+│   ├── feeder_transport.hpp                                                                                                                 il frame su RS-485, CAN e I2C: indirizzi, pezzi, guasti, limiti
 │   ├── feeder_node.hpp version.hpp                                                                                                          le parole del nodo sulla rete
-│   ├── feeder_sim.hpp                                                                                                                       una catena di alimentatori su un computer, per le prove
+│   ├── feeder_sim.hpp                                                                                                                       una catena sul computer: nastro, sensori, uno di tre bus con guasti
 │   └── json.hpp auth.hpp semver.hpp backoff.hpp task_health.hpp stored_load.hpp memory_budget.hpp net_text.hpp node_id.hpp civil_time.hpp   aiuti semplici condivisi dai nodi, tenuti uguali da uno strumento
 ├── tests/
 │   ├── check.hpp CMakeLists.txt                                                                                                             la struttura delle prove e come si compilano
 │   ├── test_frame.cpp                                                                                                                       frame, controllo e rumore; il file delle impostazioni
 │   ├── test_unit.cpp                                                                                                                        l'alimentatore su un nastro simulato: inceppamenti, tensione, pellicola, tasche, guasti del bus
+│   ├── test_bus.cpp                                                                                                                         i tre bus: impostazioni, limiti, pezzi CAN, indirizzi I2C, guasti
 │   └── test_node.cpp                                                                                                                        le parole della rete, il token, lo stato sicuro e la pagina del contratto
 ├── docs/
 │   ├── CONTRACT.md                                                                                                                          cosa dice il nodo sulla rete (e sulla catena)

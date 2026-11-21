@@ -73,6 +73,19 @@
           }
         },
         {
+          "name": "feeder_transport.hpp",
+          "desc": {
+            "en": "the frame on RS-485, CAN and I2C: addresses, pieces, faults, limits",
+            "es": "la trama en RS-485, CAN e I2C: direcciones, trozos, fallos, límites",
+            "de": "der Rahmen auf RS-485, CAN und I2C: Adressen, Teile, Fehler, Grenzen",
+            "fr": "la trame sur RS-485, CAN et I2C : adresses, morceaux, pannes, limites",
+            "it": "il frame su RS-485, CAN e I2C: indirizzi, pezzi, guasti, limiti",
+            "ja": "RS-485・CAN・I2C 上のフレーム：アドレス、分割、障害、上限",
+            "zh": "RS-485、CAN 和 I2C 上的帧：地址、分片、故障、上限",
+            "pt": "a trama em RS-485, CAN e I2C: endereços, partes, falhas, limites"
+          }
+        },
+        {
           "name": "feeder_node.hpp  version.hpp",
           "tree_name": "feeder_node.hpp version.hpp",
           "desc": {
@@ -89,14 +102,14 @@
         {
           "name": "feeder_sim.hpp",
           "desc": {
-            "en": "a chain of feeders on a computer, for tests",
-            "es": "una cadena de alimentadores en un ordenador, para pruebas",
-            "de": "eine Zuführerkette auf einem Rechner, für Tests",
-            "fr": "une chaîne d'alimentateurs sur un ordinateur, pour les tests",
-            "it": "una catena di alimentatori su un computer, per le prove",
-            "ja": "試験用のコンピュータ上のフィーダーチェーン",
-            "zh": "计算机上的供料器链，用于测试",
-            "pt": "uma cadeia de alimentadores num computador, para testes"
+            "en": "a chain on a computer: tape, sensors, one of three buses with faults",
+            "es": "una cadena en un ordenador: cinta, sensores, uno de tres buses con fallos",
+            "de": "eine Kette am Rechner: Gurt, Sensoren, einer von drei Bussen mit Fehlern",
+            "fr": "une chaîne sur ordinateur : bande, capteurs, un des trois bus avec pannes",
+            "it": "una catena sul computer: nastro, sensori, uno di tre bus con guasti",
+            "ja": "PC 上のチェーン：テープ、センサー、障害付き 3 種のバスの 1 つ",
+            "zh": "电脑上的链路：料带、传感器、带故障的三种总线之一",
+            "pt": "uma cadeia no computador: fita, sensores, um de três barramentos com falhas"
           }
         },
         {
@@ -168,6 +181,19 @@
             "ja": "模擬テープ上のフィーダー：詰まり、張力、フィルム、ポケット、バス障害",
             "zh": "模拟料带上的供料器：卡带、张力、盖带、料穴、总线故障",
             "pt": "o alimentador numa fita simulada: encravamentos, tensão, película, alvéolos, falhas do barramento"
+          }
+        },
+        {
+          "name": "test_bus.cpp",
+          "desc": {
+            "en": "the three buses: settings, limits, CAN pieces, I2C addresses, faults",
+            "es": "los tres buses: ajustes, límites, trozos CAN, direcciones I2C, fallos",
+            "de": "die drei Busse: Einstellungen, Grenzen, CAN-Teile, I2C-Adressen, Fehler",
+            "fr": "les trois bus : réglages, limites, morceaux CAN, adresses I2C, pannes",
+            "it": "i tre bus: impostazioni, limiti, pezzi CAN, indirizzi I2C, guasti",
+            "ja": "3 種のバス：設定、上限、CAN の分割、I2C アドレス、障害",
+            "zh": "三种总线：设置、上限、CAN 分片、I2C 地址、故障",
+            "pt": "os três barramentos: definições, limites, partes CAN, endereços I2C, falhas"
           }
         },
         {
