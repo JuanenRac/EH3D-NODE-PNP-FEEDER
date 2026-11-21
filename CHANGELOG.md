@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+## [0.0.2] - Three buses for the feeders, a pressure sensor or a vacuum switch for every nozzle and the lock of the X and Y axes
+
 - **Three buses under one frame:** the chain can be wired with RS-485, CAN or I2C, chosen with `bus` in `feeder.cfg`, and the frame `eh3d.feeder/1` is the same on all of them; the node says its bus in the status.
 - **RS-485:** the direction line of the transceiver and its turnaround are modelled, with the baud rate and the turnaround as settings.
 - **CAN:** a frame is cut in pieces of seven bytes, each in a CAN frame with an identifier that names the feeder, and put back together; a lost or misplaced piece loses the frame and is counted; the bit rate and the first identifier are settings.
