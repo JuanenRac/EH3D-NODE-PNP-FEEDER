@@ -233,6 +233,21 @@ TEST(a_stopped_heartbeat_is_what_the_feeders_see_as_a_lost_node) {
     CHECK(r.chain.unit(1).unit.state() == State::Safe);
 }
 
+TEST(a_move_longer_than_the_link_watch_does_not_send_the_other_feeders_to_their_safe_state) {
+    Settings s = with_token();
+    s.motion_mm_per_s = 5.0;      // eight pitches of 4 mm take 6.4 s: more than twice link_lost_ms
+    s.advance_timeout_ms = 20000;
+    Rig r(s);
+    r.run_for(500);
+    const std::uint32_t before = r.chain.now_ms();
+    eh3d::json::Value v;
+    Response a = r.post("/api/feeder/advance?slot=1&count=8");
+    CHECK(a.status == 200 && parse(a.body, v) && v.bool_or("ok", false));
+    CHECK(r.chain.now_ms() - before > static_cast<std::uint32_t>(s.link_lost_ms));
+    for (int n = 1; n <= 3; ++n) CHECK(r.chain.unit(n).unit.state() == State::Idle && r.chain.unit(n).unit.fault() == Fault::None);
+    CHECK(r.post("/api/feeder/advance?slot=2").status == 200);
+}
+
 TEST(the_status_words_are_the_words_of_the_page_of_the_contract) {
     std::string page = read_file("docs/CONTRACT.md");
     CHECK(!page.empty());

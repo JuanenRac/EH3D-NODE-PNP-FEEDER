@@ -149,6 +149,8 @@ public:
         if (!r.ok) { o.ok = false; o.why = error_text(r.error); return o; }
         std::uint32_t waited = 0;
         const std::uint32_t poll = 20;
+        // the node is busy with this move and its own heartbeat does not run: the other feeders hear it from here, or a long move would send them all to their safe state
+        std::uint32_t beat = bus_.now_ms();
         while (s.state == State::Advancing || s.state == State::Retracting) {
             if (waited >= static_cast<std::uint32_t>(cfg_.advance_timeout_ms)) {
                 request(static_cast<std::uint8_t>(slot_n), kCmdStop);
@@ -157,6 +159,10 @@ public:
             }
             bus_.wait(poll);
             waited += poll;
+            if (bus_.now_ms() - beat >= static_cast<std::uint32_t>(cfg_.link_lost_ms / 3)) {
+                broadcast(kCmdPing);
+                beat = bus_.now_ms();
+            }
             if (!request(static_cast<std::uint8_t>(slot_n), kCmdStatus).ok) { o.ok = false; o.why = "no_answer"; return o; }
         }
         switch (s.state) {
