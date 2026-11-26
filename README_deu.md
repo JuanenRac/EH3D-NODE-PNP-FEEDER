@@ -19,7 +19,7 @@
 
 ---
 
-**Ehrlichkeitscheck - was heute tatsächlich läuft:** ein Gerüst mit echter, getesteter Logik und ohne Hardware. Die Regeln des Knotens laufen auf einem Rechner gegen einen Simulator (103 Tests bestehen), aber nichts davon wurde als Firmware gebaut, geflasht oder mit einem Motor, einem Gurtsensor oder einem Zuführerbus verbunden.
+**Ehrlichkeitscheck - was heute tatsächlich läuft:** ein Knoten, der in der Simulation funktioniert: echte, getestete Logik, ohne Firmware und ohne Hardware. Die Regeln des Knotens laufen auf einem Rechner gegen einen Simulator (103 Tests bestehen), aber nichts davon wurde als Firmware gebaut, geflasht oder mit einem Motor, einem Gurtsensor oder einem Zuführerbus verbunden.
 
 ---
 
