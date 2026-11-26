@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- The shared workflow checker (`tools/workflow_hygiene.py`) is the current one of the documentation hub: the filters under a trigger (branches, paths, types) are no longer read as events.
+
 ## [0.0.2] - Three buses for the feeders, a pressure sensor or a vacuum switch for every nozzle and the lock of the X and Y axes
 
 - **Three buses under one frame:** the chain can be wired with RS-485, CAN or I2C, chosen with `bus` in `feeder.cfg`, and the frame `eh3d.feeder/1` is the same on all of them; the node says its bus in the status.
