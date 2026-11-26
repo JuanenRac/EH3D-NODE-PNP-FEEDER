@@ -4,6 +4,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **A long advance no longer sends the other feeders to their safe state (fix):** while the node waited for the end of a move it sent no heartbeat, so a move longer than `link_lost_ms` (eight large pitches, or a slow speed) left every other feeder of the chain holding `FDR-L01` until a person acknowledged it. The heartbeat now goes on during the move. One new test, on the simulator only.
 - The shared workflow checker (`tools/workflow_hygiene.py`) is the current one of the documentation hub: the filters under a trigger (branches, paths, types) are no longer read as events.
 
 ## [0.0.2] - Three buses for the feeders, a pressure sensor or a vacuum switch for every nozzle and the lock of the X and Y axes
