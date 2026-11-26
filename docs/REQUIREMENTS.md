@@ -2,7 +2,7 @@
 
 This register is the single source of the state of each capability: `STATUS.md`, the README files and the capability matrix of the documentation hub cite it and never state a state that it does not. A state is one of `planned`, `prototype`, `implemented` and `validated`. `validated` means that a person has run the capability on real hardware and the evidence of the manifest says `bench` or `field`; nothing here is validated, because nothing of this node has run on a board.
 
-The register has 88 requirements: 81 implemented, 0 prototype, 7 planned and 0 validated. By progress: 81 done, 0 partial, 4 pending and 3 blocked. High coverage is not proof of correctness, so each row says how it is checked: the test that names it, and what it shows.
+The register has 90 requirements: 83 implemented, 0 prototype, 7 planned and 0 validated. By progress: 83 done, 0 partial, 4 pending and 3 blocked. High coverage is not proof of correctness, so each row says how it is checked: the test that names it, and what it shows.
 
 ## How to read the register
 
@@ -137,3 +137,5 @@ The check is `tools/test_node.py`: it reads this table, finds each test and fail
 | PNPF-086 | A slower bus makes the same advance take longer but move the same tape. | implemented | done | simulator | `test_bus::a_slower_bus_makes_the_same_advance_take_longer_but_move_the_same_tape` | The bus is simulated; a real wire has not been measured. |
 | PNPF-087 | The node says its bus in the status and counts what was busy or collided. | implemented | done | simulator | `test_bus::the_node_says_the_bus_and_counts_what_was_busy_or_collided` | The bus is simulated; a real wire has not been measured. |
 | PNPF-088 | The page of the contract names the three buses and every key of them, and the page of the hardware lists the bench test of each. | implemented | done | host-test | `test_bus::the_page_of_the_contract_names_the_three_buses_and_every_key_of_them` | - |
+| PNPF-089 | The status says the time of the watch over the server, with or without the token: the value of the settings the node runs with. | implemented | done | host-test | `test_node::the_status_says_the_server_time_of_the_settings_with_or_without_the_token` | - |
+| PNPF-090 | The time the status says is the time the node keeps, and reading the status without the token does not keep the watch. | implemented | done | simulator | `test_node::the_server_time_of_the_status_is_the_time_the_node_keeps` | The time it takes on a board is a bench test. |

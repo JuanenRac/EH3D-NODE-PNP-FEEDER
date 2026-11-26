@@ -6,7 +6,7 @@ EH3D-NODE-PNP-FEEDER is the logic of a node, tested against a simulator. It has 
 
 ## Capabilities
 
-The official state of each capability is in `REQUIREMENTS.md`. The register has 88 requirements: 81 implemented, 0 prototype, 7 planned and 0 validated. By progress: 81 done, 0 partial, 4 pending and 3 blocked. This page never states a state that `REQUIREMENTS.md` does not.
+The official state of each capability is in `REQUIREMENTS.md`. The register has 90 requirements: 83 implemented, 0 prototype, 7 planned and 0 validated. By progress: 83 done, 0 partial, 4 pending and 3 blocked. This page never states a state that `REQUIREMENTS.md` does not.
 
 ## What is simulated
 

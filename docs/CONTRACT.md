@@ -18,6 +18,7 @@ Always answered, with or without the token. One line of JSON.
 | `online` | number | the slots that answered the last time they were asked |
 | `safe` | bool | the node is in its safe state: it stopped the chain because the server was not heard, and moves nothing until a person acknowledges |
 | `safe_reason` | text | `server_lost`, or `none` |
+| `server_lost_ms` | number | milliseconds without a request with the token after which the node is safe: the setting `server_lost_ms` it runs with (1000 to 600000), said with or without the token |
 | `bus_exchanges` | number | frames sent on the bus since the start, the repeats included |
 | `bus_retries` | number | frames sent again because no good answer came back |
 | `bus_errors` | number | exchanges without a good answer |
@@ -94,7 +95,7 @@ A feeder that holds a fault moves nothing until it is acknowledged, and it is ac
 
 * A feeder that has heard the node once and then nothing for `link_lost_ms` stops the tape where it is and holds `FDR-L01`.
 * The node sends a heartbeat to all the feeders three times in every `link_lost_ms`, only while it is itself fine.
-* A node that has not heard the server (a request with the token) for `server_lost_ms` sends a stop to all, stops the heartbeat (so the feeders go to their safe state a moment later) and refuses to move anything until a person acknowledges it. The server must therefore ask something with the token at least once in that time.
+* A node that has not heard the server (a request with the token) for `server_lost_ms` sends a stop to all, stops the heartbeat (so the feeders go to their safe state a moment later) and refuses to move anything until a person acknowledges it. The server must therefore ask something with the token at least once in that time. The node says it in `server_lost_ms` of `GET /api/status`, so a server does not have to guess it; asking for the status without the token reads it and does not count as the server being heard. It is not `link_lost_ms`, the watch of the feeders over the node.
 * A cut bus makes the feeders stop on their own and the node mark the slots offline after `offline_after` exchanges without an answer.
 
 ## The frame `eh3d.feeder/1`

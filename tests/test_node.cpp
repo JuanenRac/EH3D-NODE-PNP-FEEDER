@@ -193,6 +193,38 @@ TEST(a_stop_over_http_stops_the_chain) {
     CHECK(r.chain.unit(1).unit.state() == State::Idle);
 }
 
+TEST(the_status_says_the_server_time_of_the_settings_with_or_without_the_token) {
+    eh3d::json::Value v;
+    Rig d(with_token());
+    CHECK(parse(d.get("/api/status", false).body, v) && v.integer_or("server_lost_ms", 0, 0, 700000) == 15000);
+    Settings s;
+    CHECK(parse_settings("server_lost_ms = 42000\n", s).empty());
+    s.token = "tok";
+    Rig r(s);
+    CHECK(parse(r.get("/api/status", false).body, v) && v.integer_or("server_lost_ms", 0, 0, 700000) == 42000);
+    CHECK(parse(r.get("/api/status").body, v) && v.integer_or("server_lost_ms", 0, 0, 700000) == 42000);
+    // a value that is refused leaves the default, and the default is what is said; a node without a token says it too
+    Settings refused;
+    CHECK(!parse_settings("server_lost_ms = 100\n", refused).empty());
+    Rig n(refused);
+    CHECK(parse(n.get("/api/status", false).body, v) && v.integer_or("server_lost_ms", 0, 0, 700000) == 15000);
+}
+
+TEST(the_server_time_of_the_status_is_the_time_the_node_keeps) {
+    Settings s = with_token();
+    s.server_lost_ms = 8000;
+    Rig r(s);
+    eh3d::json::Value v;
+    CHECK(parse(r.get("/api/status", false).body, v));
+    const std::uint32_t said = static_cast<std::uint32_t>(v.integer_or("server_lost_ms", 0, 0, 700000));
+    CHECK(said == 8000u);
+    r.run_for(said - 1000);
+    CHECK(!r.node.safe());
+    CHECK(r.get("/api/status", false).status == 200);  // without the token: it does not keep the watch
+    r.run_for(2000);
+    CHECK(r.node.safe() && r.node.safe_reason() == "server_lost");
+}
+
 TEST(a_server_that_keeps_asking_keeps_the_chain_awake) {
     Rig r(with_token());
     for (int i = 0; i < 12; ++i) {  // 60 s, a poll every 5 s: longer than the watch of the server and of the feeders

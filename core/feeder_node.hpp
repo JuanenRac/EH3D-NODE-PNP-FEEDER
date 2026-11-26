@@ -210,6 +210,8 @@ public:
         w.begin_object();
         w.field("node", cfg_.name).field("version", kVersion).field("slots", cfg_.slots).field("online", online);
         w.field("safe", safe_).field("safe_reason", safe_ ? safe_reason_ : std::string("none"));
+        // the time of the watch over the server, from the settings the node runs with: whoever asks can tell how often it has to
+        w.field("server_lost_ms", cfg_.server_lost_ms);
         w.field("bus_exchanges", static_cast<long long>(ctrl_.exchanges())).field("bus_retries", static_cast<long long>(ctrl_.retries()));
         w.field("bus_errors", static_cast<long long>(ctrl_.bus_errors()));
         const LinkStats link = bus_.link_stats();
