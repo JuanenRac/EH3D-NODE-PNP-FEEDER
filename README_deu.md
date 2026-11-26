@@ -12,14 +12,14 @@
   <img src="https://img.shields.io/badge/License-GPL%203.0--or--later-blue.svg" alt="GPL 3.0 or later">
   <img src="https://img.shields.io/badge/Stack-C%2B%2B17%20%2B%20Python-blue.svg" alt="C++17 and Python">
   <img src="https://img.shields.io/badge/Languages-8-00E5FF.svg" alt="Languages">
-  <img src="https://img.shields.io/badge/Tests-103-2EA043.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-105-2EA043.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.0.2-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-4CAF50.svg" alt="Maturity">
 </p>
 
 ---
 
-**Ehrlichkeitscheck - was heute tatsächlich läuft:** ein Knoten, der in der Simulation funktioniert: echte, getestete Logik, ohne Firmware und ohne Hardware. Die Regeln des Knotens laufen auf einem Rechner gegen einen Simulator (103 Tests bestehen), aber nichts davon wurde als Firmware gebaut, geflasht oder mit einem Motor, einem Gurtsensor oder einem Zuführerbus verbunden.
+**Ehrlichkeitscheck - was heute tatsächlich läuft:** ein Knoten, der in der Simulation funktioniert: echte, getestete Logik, ohne Firmware und ohne Hardware. Die Regeln des Knotens laufen auf einem Rechner gegen einen Simulator (105 Tests bestehen), aber nichts davon wurde als Firmware gebaut, geflasht oder mit einem Motor, einem Gurtsensor oder einem Zuführerbus verbunden.
 
 ---
 
@@ -31,7 +31,7 @@
 |---|---|
 | Version | `0.0.2` |
 | Reifegrad | Funktionsfähig |
-| Tests | 103 |
+| Tests | 105 |
 | Technologie-Stack | C++17 (host tests), Python 3.10+ |
 | Auf echter Hardware | Noch nicht auf Hardware ausgeführt |
 
@@ -45,7 +45,7 @@ Jede Zeile ist ein Teil dieses Repositorys, und die Ampel sagt, wie weit er heut
 
 | Bereich | Stand | Was das hier bedeutet |
 |---|---|---|
-| Logik und Simulator | 🟡 | Die Regeln des Knotens laufen gegen einen Simulator mit festem Seed; 103 Tests bestehen auf einem Rechner. |
+| Logik und Simulator | 🟡 | Die Regeln des Knotens laufen gegen einen Simulator mit festem Seed; 105 Tests bestehen auf einem Rechner. |
 | Netzwerkvertrag | 🟡 | Die Worte des Knotens stehen in docs/CONTRACT.md und ein Test schlägt fehl, wenn Seite und Antworten abweichen; das Plugin des Servers nutzt diesen Knoten noch nicht. |
 | Firmware | 🟠 | Die Firmware für die Platine ist noch nicht geschrieben: nur die einfachen Helfer der gemeinsamen Basis sind importiert. |
 | Echte Hardware | 🔴 | Auf einem Motor, einem Gurtsensor oder einem Zuführerbus ist noch nichts gelaufen. |
@@ -72,7 +72,7 @@ Wie die Teile dieses Repositorys zusammenpassen: wer es nutzt, was es enthält u
 Die Sicherheitsregeln dieses Knotens; der Test, der jede zeigt, ist in docs/REQUIREMENTS.md genannt:
 
 * Ein Knoten ohne Token weist jede Anfrage ab, die etwas bewegt oder ändert; das Token wird nie angezeigt, zurückgeschrieben oder protokolliert.
-* Hört der Knoten den Server nicht, geht er von selbst in einen sicheren Zustand und bewegt nichts, bis eine Person quittiert.
+* Hört der Knoten den Server nicht, geht er von selbst in einen sicheren Zustand und bewegt nichts, bis eine Person quittiert. Wie lang diese Zeit ist, sagt der Knoten ungefragt: `server_lost_ms` in `GET /api/status`, der Wert aus seinen Einstellungen.
 * Jede Grenze ist eine Einstellung mit vorsichtigem Standardwert, und ein falscher Wert lockert nie eine: er wird abgewiesen und der Standardwert bleibt.
 
 ## 🔌 Schnittstellen
@@ -110,7 +110,7 @@ python -I -m unittest discover -s tools -p "test_*.py"
 
 ## 🧪 Tests
 
-103 Tests: C++-Tests auf dem Rechner mit festem Seed (sie lassen den Simulator und die Netzwerkworte laufen und vergleichen die Vertragsseite mit den Antworten) und Python-Tests des Repositorys. Die CI führt die C++-Tests auch mit AddressSanitizer und UBSan aus.
+105 Tests: C++-Tests auf dem Rechner mit festem Seed (sie lassen den Simulator und die Netzwerkworte laufen und vergleichen die Vertragsseite mit den Antworten) und Python-Tests des Repositorys. Die CI führt die C++-Tests auch mit AddressSanitizer und UBSan aus.
 
 ## 🏗️ Build und Veröffentlichung
 
