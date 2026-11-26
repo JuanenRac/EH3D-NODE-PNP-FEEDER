@@ -19,7 +19,7 @@
 
 ---
 
-**Honesty check - what actually runs today:** a scaffold with real, tested logic and no hardware. The rules of the node run on a computer against a simulator (103 tests pass), but nothing here has been built into firmware, flashed or connected to a motor, a tape sensor or a bus of feeders.
+**Honesty check - what actually runs today:** a node that works in simulation: real, tested logic, with no firmware and no hardware. The rules of the node run on a computer against a simulator (103 tests pass), but nothing here has been built into firmware, flashed or connected to a motor, a tape sensor or a bus of feeders.
 
 ---
 

@@ -19,7 +19,7 @@
 
 ---
 
-**Verificação de honestidade - o que funciona hoje:** uma estrutura inicial com lógica real e testada e sem hardware. As regras do nó correm num computador contra um simulador (103 testes passam), mas nada aqui foi compilado como firmware, gravado ou ligado a um motor, um sensor de fita ou um barramento de alimentadores.
+**Verificação de honestidade - o que funciona hoje:** um nó que funciona em simulação: lógica real e testada, sem firmware e sem hardware. As regras do nó correm num computador contra um simulador (103 testes passam), mas nada aqui foi compilado como firmware, gravado ou ligado a um motor, um sensor de fita ou um barramento de alimentadores.
 
 ---
 
