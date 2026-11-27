@@ -5,7 +5,7 @@
 #pragma once
 
 #ifndef PNP_FEEDER_VERSION
-#define PNP_FEEDER_VERSION "0.0.2"
+#define PNP_FEEDER_VERSION "0.0.3"
 #endif
 
 namespace pnp_feeder {

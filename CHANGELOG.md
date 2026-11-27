@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+## [0.0.3] - Says its link time and works on while the server waits (simulator only)
+
 - **The shared lessons check reads only what is part of the repository:** what git ignores, and folders such as `managed_components` that a firmware build downloads, are no longer analysed, so the local validation no longer fails over downloaded code.
 - **The node says how long it goes without being asked:** `GET /api/status` has `server_lost_ms`, the value of the settings the node runs with, with or without the token, so a server can tell when it asks too slowly. Two new tests, on the simulator only; nothing has run on a board.
 - **The READMEs say what the node is today:** it works in simulation with tested logic, with no firmware and no hardware; they no longer call it a scaffold.
