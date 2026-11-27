@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+## [0.0.4] - A moving tape can be stopped and a silent server is watched (host tests, no board)
+
 - **A stop reaches a tape that is moving (safety):** while the node waited for the end of an advance it heard nothing, so a stop could not be given. It now listens through the bus (`Bus::listen`, for the transport to fill), carries out a stop, answers other orders `busy`, and an advance that was stopped is answered `stopped`, never as done. On the simulator only.
 - **The watch over the server runs during a move and before a late request counts (safety):** a server lost in the middle of an advance stops the chain and the advance is answered `safe_state`, and a request that ends a silence longer than `server_lost_ms` no longer hides it.
 - **A feeder disabled by too many faults stays disabled when the node is lost (safety):** the link watch turned it into the safe state, and a plain acknowledgement then let it move again without `reenable=1`.
