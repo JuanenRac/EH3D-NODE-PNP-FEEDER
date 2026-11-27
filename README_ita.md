@@ -12,14 +12,14 @@
   <img src="https://img.shields.io/badge/License-GPL%203.0--or--later-blue.svg" alt="GPL 3.0 or later">
   <img src="https://img.shields.io/badge/Stack-C%2B%2B17%20%2B%20Python-blue.svg" alt="C++17 and Python">
   <img src="https://img.shields.io/badge/Languages-8-00E5FF.svg" alt="Languages">
-  <img src="https://img.shields.io/badge/Tests-105-2EA043.svg" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-112-2EA043.svg" alt="Tests">
   <img src="https://img.shields.io/badge/Version-0.0.3-0f6cbd.svg" alt="Version">
   <img src="https://img.shields.io/badge/Maturity-functional-4CAF50.svg" alt="Maturity">
 </p>
 
 ---
 
-**Verifica di onestà - cosa funziona oggi:** un nodo che funziona in simulazione: logica reale e provata, senza firmware e senza hardware. Le regole del nodo girano su un computer contro un simulatore (105 test superati), ma nulla qui è stato compilato come firmware, scritto su una scheda o collegato a un motore, un sensore di nastro o un bus di alimentatori.
+**Verifica di onestà - cosa funziona oggi:** un nodo che funziona in simulazione: logica reale e provata, senza firmware e senza hardware. Le regole del nodo girano su un computer contro un simulatore (112 test superati), ma nulla qui è stato compilato come firmware, scritto su una scheda o collegato a un motore, un sensore di nastro o un bus di alimentatori.
 
 ---
 
@@ -31,7 +31,7 @@
 |---|---|
 | Versione | `0.0.3` |
 | Maturità | Funzionale |
-| Test | 105 |
+| Test | 112 |
 | Stack tecnologico | C++17 (host tests), Python 3.10+ |
 | Su hardware reale | Non ancora eseguito su hardware |
 
@@ -45,7 +45,7 @@ Ogni riga è una parte di questo repository e il semaforo dice a che punto è og
 
 | Area | Stato | Cosa significa qui |
 |---|---|---|
-| Logica e simulatore | 🟡 | Le regole del nodo girano contro un simulatore con seme fisso; 105 test superati su un computer. |
+| Logica e simulatore | 🟡 | Le regole del nodo girano contro un simulatore con seme fisso; 112 test superati su un computer. |
 | Contratto di rete | 🟡 | Le parole del nodo sono scritte in docs/CONTRACT.md e un test fallisce quando pagina e risposte differiscono; il plugin del server non usa ancora questo nodo. |
 | Firmware | 🟠 | Il firmware della scheda non è ancora scritto: sono importati solo gli aiuti semplici della base condivisa. |
 | Hardware reale | 🔴 | Nulla è girato su un motore, un sensore di nastro o un bus di alimentatori. |
@@ -110,7 +110,7 @@ python -I -m unittest discover -s tools -p "test_*.py"
 
 ## 🧪 Test
 
-105 test: test C++ su computer con seme fisso (eseguono il simulatore e le parole della rete e confrontano la pagina del contratto con le risposte) e test Python del repository. La CI esegue i test C++ anche con AddressSanitizer e UBSan.
+112 test: test C++ su computer con seme fisso (eseguono il simulatore e le parole della rete e confrontano la pagina del contratto con le risposte) e test Python del repository. La CI esegue i test C++ anche con AddressSanitizer e UBSan.
 
 ## 🏗️ Compilazione e rilascio
 

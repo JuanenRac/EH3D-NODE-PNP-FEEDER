@@ -43,7 +43,9 @@ inline bool parse_request_line(const std::string& line, Request& out) {
     std::size_t a = line.find(' ');
     if (a == std::string::npos || a == 0) return false;
     std::size_t b = line.find(' ', a + 1);
-    std::string target = line.substr(a + 1, b == std::string::npos ? std::string::npos : b - a - 1);
+    // the version of HTTP ends the line: without it the line was cut short, and `mm=35` may have arrived as `mm=3`
+    if (b == std::string::npos || line.compare(b + 1, 5, "HTTP/") != 0) return false;
+    std::string target = line.substr(a + 1, b - a - 1);
     if (target.empty() || target[0] != '/') return false;
     out.method = line.substr(0, a);
     std::size_t q = target.find('?');
@@ -65,6 +67,19 @@ inline std::string query_value(const std::string& query, const std::string& key)
     return "";
 }
 
+/// Whether the query names `key` at all, with a value or without: a field that is there and cannot be read is refused, never taken as left out.
+inline bool query_has(const std::string& query, const std::string& key) {
+    std::size_t pos = 0;
+    while (pos <= query.size()) {
+        std::size_t end = query.find('&', pos);
+        if (end == std::string::npos) end = query.size();
+        std::string pair = query.substr(pos, end - pos);
+        if (pair.substr(0, pair.find('=')) == key) return true;
+        pos = end + 1;
+    }
+    return false;
+}
+
 inline std::string error_body(const char* error, const char* key = nullptr) {
     eh3d::json::Writer w;
     w.begin_object().field("error", error);
@@ -75,7 +90,14 @@ inline std::string error_body(const char* error, const char* key = nullptr) {
 
 class Node {
 public:
-    Node(const Settings& settings, Bus& bus) : cfg_(settings), bus_(bus), ctrl_(bus, cfg_) {}
+    Node(const Settings& settings, Bus& bus) : cfg_(settings), bus_(bus), ctrl_(bus, cfg_) {
+        ctrl_.while_waiting([this] {
+            watch();  // before anything new is heard: a silence that is already too long is a loss
+            if (moving_) bus_.listen();
+        });
+    }
+    Node(const Node&) = delete;
+    Node& operator=(const Node&) = delete;
 
     /// At power-up: look for the feeders and start the watch over the server.
     void start() {
@@ -92,11 +114,7 @@ public:
     /// Called often by the firmware: if the server has been silent too long, the chain is stopped.
     void tick() {
         const std::uint32_t now = bus_.now_ms();
-        if (!safe_ && now - server_seen_ > static_cast<std::uint32_t>(cfg_.server_lost_ms)) {
-            ctrl_.broadcast(kCmdStop);
-            safe_ = true;
-            safe_reason_ = "server_lost";
-        }
+        watch();
         // the heartbeat: while the node is fine the feeders hear it often; when it stops (the node is safe, lost or dead) they stop by themselves after link_lost_ms
         if (!safe_ && now - last_beat_ >= static_cast<std::uint32_t>(cfg_.link_lost_ms / 3)) {
             ctrl_.broadcast(kCmdPing);
@@ -111,7 +129,10 @@ public:
         if (status && r.method != "GET") return {405, error_body("bad_method")};
         if (!status && !known(r)) return {404, error_body("not_found")};
         const bool authorized = !cfg_.token.empty() && eh3d::auth::same_text(cfg_.token, !bearer.empty() ? bearer : query_value(r.query, "token"));
-        if (authorized) server_seen_ = bus_.now_ms();
+        if (authorized) {
+            watch();  // a silence that was already too long is judged before this request counts
+            server_seen_ = bus_.now_ms();
+        }
         if (status) return {200, status_json()};
         if (!authorized) return {401, error_body("unauthorized")};
         if (r.path == "/api/feeder") {
@@ -121,6 +142,8 @@ public:
             return {200, feeder_json(slot, true)};
         }
         if (r.method != "POST") return {405, error_body("bad_method")};
+        // while a tape moves the others are heard (they count for the link) but only a stop is carried out
+        if (moving_ && r.path != "/api/feeder/stop") return {409, error_body("busy")};
         if (r.path == "/api/discover") {
             int found = ctrl_.discover();
             eh3d::json::Writer w;
@@ -128,12 +151,12 @@ public:
             return {200, w.str()};
         }
         if (r.path == "/api/feeder/stop") {
-            ctrl_.broadcast(kCmdStop);
+            ctrl_.halt();
             eh3d::json::Writer w;
             w.begin_object().field("ok", true).end_object();
             return {200, w.str()};
         }
-        if (r.path == "/api/feeder/ack" && query_value(r.query, "slot").empty()) {
+        if (r.path == "/api/feeder/ack" && !query_has(r.query, "slot")) {
             if (!safe_) return {200, result_body(true, "not_held", 0)};
             safe_ = false;
             safe_reason_.clear();
@@ -146,8 +169,11 @@ public:
             if (safe_) return {409, error_body("safe_state")};
             long long count = 1;
             std::string c = query_value(r.query, "count");
-            if (!c.empty() && !cfg::parse_int(c, 1, 8, count)) return {400, error_body("bad_request", "count")};
+            if (query_has(r.query, "count") && !cfg::parse_int(c, 1, 8, count)) return {400, error_body("bad_request", "count")};
+            moving_ = true;
             Outcome o = ctrl_.advance(slot, static_cast<int>(count), r.path == "/api/feeder/retract");
+            moving_ = false;
+            if (!o.ok && o.why == "stopped" && safe_) o.why = "safe_state";
             return {outcome_status(o), result_body(o.ok, o.why.c_str(), slot)};
         }
         if (r.path == "/api/feeder/identify") return simple(slot, kCmdIdentify, {});
@@ -244,6 +270,15 @@ public:
     }
 
 private:
+    /// The server has been silent for too long: the chain is stopped.
+    void watch() {
+        if (!safe_ && bus_.now_ms() - server_seen_ > static_cast<std::uint32_t>(cfg_.server_lost_ms)) {
+            safe_ = true;
+            safe_reason_ = "server_lost";
+            ctrl_.halt();
+        }
+    }
+
     static bool known(const Request& r) {
         static const char* paths[] = {"/api/feeder", "/api/feeder/advance", "/api/feeder/retract", "/api/feeder/identify", "/api/feeder/count", "/api/feeder/pitch",
                                       "/api/feeder/ack", "/api/feeder/stop", "/api/discover"};
@@ -286,6 +321,7 @@ private:
     Bus& bus_;
     Controller ctrl_;
     bool safe_ = false;
+    bool moving_ = false;
     std::string safe_reason_;
     std::uint32_t server_seen_ = 0;
     std::uint32_t started_ = 0;

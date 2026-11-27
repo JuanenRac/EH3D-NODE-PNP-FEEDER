@@ -173,7 +173,8 @@ public:
     void tick(std::uint32_t now_ms, std::uint32_t dt_ms, const Sensors& s) {
         step_mm_ = 0;
         sensors_ = s;
-        if (heard_ && state_ != State::Safe && now_ms - last_heard_ > static_cast<std::uint32_t>(cfg_.link_lost_ms)) {
+        // a feeder disabled by too many faults stays disabled: it moves nothing already, and a lost link must not turn it into a state that a plain acknowledgement clears
+        if (heard_ && state_ != State::Safe && state_ != State::Disabled && now_ms - last_heard_ > static_cast<std::uint32_t>(cfg_.link_lost_ms)) {
             // the node is gone: stop whatever is moving and hold a fault until a person acknowledges it
             target_mm_ = moved_mm_ = 0;
             state_ = State::Safe;

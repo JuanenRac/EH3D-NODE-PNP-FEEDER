@@ -323,4 +323,131 @@ TEST(the_version_of_the_firmware_is_the_one_of_the_manifest) {
     CHECK(m.string_or("version", "?") == std::string(kVersion));
 }
 
+// ----- orders that come late, cut short or while a tape moves -----
+
+namespace {
+
+// A chain whose transport hands one request to the node while it waits for an advance.
+struct ListeningChain : SimChain {
+    using SimChain::SimChain;
+    Node* node = nullptr;
+    std::string order;
+    std::uint32_t began = 0, after_ms = 0, every_ms = 0;
+    Response got{0, ""};
+    void listen() {
+        if (node == nullptr || order.empty() || now_ms() - began < after_ms) return;
+        const std::string line = order;
+        if (every_ms == 0) order.clear(); else began = now_ms();
+        got = node->handle(line, "tok");
+    }
+};
+
+Settings slow_tape() {
+    Settings s = with_token();
+    s.motion_mm_per_s = 5.0;  // eight pitches of 4 mm take 6.4 s
+    s.advance_timeout_ms = 20000;
+    return s;
+}
+
+}  // namespace
+
+TEST(a_stop_given_while_a_tape_moves_stops_it_and_the_advance_is_not_answered_as_done) {
+    Settings s = slow_tape();
+    ListeningChain chain(s, 3);
+    Node node(s, chain);
+    node.start();
+    chain.node = &node;
+    chain.order = "POST /api/feeder/stop HTTP/1.1";
+    chain.began = chain.now_ms();
+    chain.after_ms = 1000;
+    Response a = node.handle("POST /api/feeder/advance?slot=1&count=8 HTTP/1.1", "tok");
+    eh3d::json::Value v;
+    CHECK(chain.got.status == 200);
+    CHECK(a.status == 409 && parse(a.body, v) && v.string_or("why", "") == "stopped");
+    CHECK(chain.unit(1).tape.pos_mm < 10.0);
+    CHECK(chain.unit(1).unit.state() == State::Idle);
+}
+
+TEST(another_order_while_a_tape_moves_is_busy) {
+    Settings s = slow_tape();
+    ListeningChain chain(s, 3);
+    Node node(s, chain);
+    node.start();
+    chain.node = &node;
+    chain.order = "POST /api/feeder/advance?slot=2 HTTP/1.1";
+    chain.began = chain.now_ms();
+    chain.after_ms = 1000;
+    CHECK(node.handle("POST /api/feeder/advance?slot=1&count=8 HTTP/1.1", "tok").status == 200);
+    CHECK(chain.got.status == 409 && chain.got.body.find("busy") != std::string::npos);
+    CHECK(chain.unit(2).tape.pos_mm == 0.0);
+}
+
+TEST(a_server_that_goes_silent_in_the_middle_of_a_move_stops_it) {
+    Settings s = slow_tape();
+    s.server_lost_ms = 2000;
+    Rig r(s);
+    Response a = r.post("/api/feeder/advance?slot=1&count=8");
+    eh3d::json::Value v;
+    CHECK(a.status == 409 && parse(a.body, v) && v.string_or("why", "") == "safe_state");
+    CHECK(r.node.safe());
+    CHECK(r.chain.unit(1).tape.pos_mm < 15.0);
+}
+
+TEST(a_server_that_asks_while_a_tape_moves_is_heard) {
+    Settings s = slow_tape();
+    s.server_lost_ms = 2000;
+    ListeningChain chain(s, 3);
+    Node node(s, chain);
+    node.start();
+    chain.node = &node;
+    chain.order = "GET /api/feeder?slot=1 HTTP/1.1";
+    chain.began = chain.now_ms();
+    chain.every_ms = chain.after_ms = 500;
+    CHECK(node.handle("POST /api/feeder/advance?slot=1&count=8 HTTP/1.1", "tok").status == 200);
+    CHECK(!node.safe());
+}
+
+TEST(a_silence_nobody_judged_is_judged_before_the_next_order_counts) {
+    Rig r(with_token());
+    r.chain.wait(static_cast<std::uint32_t>(r.s.server_lost_ms) + 1000);  // the node was not called
+    CHECK(r.post("/api/feeder/advance?slot=1").status == 409);
+    CHECK(r.node.safe());
+}
+
+TEST(a_request_cut_short_or_with_an_empty_field_is_not_an_order) {
+    Rig r(with_token());
+    CHECK(r.node.handle("POST /api/feeder/advance?slot=1&count=1", "tok").status == 400);  // cut from count=1 or 18
+    CHECK(r.post("/api/feeder/advance?slot=1&count=").status == 400);
+    CHECK(r.chain.unit(1).tape.pos_mm == 0.0);
+    r.run_for(static_cast<std::uint32_t>(r.s.server_lost_ms) + 1000);
+    CHECK(r.node.safe());
+    CHECK(r.node.handle("POST /api/feeder/ack", "tok").status == 400);
+    CHECK(r.post("/api/feeder/ack?slot=").status == 400);  // not the acknowledgement of the whole node
+    CHECK(r.node.safe());
+}
+
+TEST(a_disabled_feeder_stays_disabled_through_a_loss_of_the_node) {
+    UnitConfig c;
+    c.fault_limit = 1;
+    Unit u(c, 1);
+    Frame order, reply;
+    order.addr = 1;
+    order.cmd = kCmdAdvance;
+    order.seq = 1;
+    order.payload = {1};
+    CHECK(u.handle(order, 1000, reply));
+    Sensors jammed;
+    jammed.stalled = true;
+    u.tick(1010, 10, jammed);
+    CHECK(u.state() == State::Disabled);
+    const std::uint32_t later = 1010 + static_cast<std::uint32_t>(c.link_lost_ms) + 100;
+    u.tick(later, 10, Sensors());
+    order.cmd = kCmdAck;
+    order.seq = 2;
+    order.payload.clear();
+    CHECK(u.handle(order, later, reply));
+    CHECK(reply.cmd == kCmdError && reply.payload.size() == 1 && reply.payload[0] == kErrDisabled);
+    CHECK(u.state() == State::Disabled);
+}
+
 int main() { return check::run_all("node"); }

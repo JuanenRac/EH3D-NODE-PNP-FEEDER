@@ -53,13 +53,15 @@ Needs the token. One feeder.
 
 They need the token (a node with no token refuses them with `401`). A word that does not fit is a `400` with `{"error":"bad_request","key":"<word>"}`. While the node is in its safe state, every request that moves or changes a feeder is a `409` with `{"error":"safe_state"}`.
 
-* `POST /api/feeder/advance?slot=N[&count=K]` moves the tape K pitches (1 to 8, 1 by default) and answers when the move is over. The answer is `{"ok":true,"why":"ok","slot":N,"feeder":{...}}` or, with `ok` false, `why` says what stopped it: `bad_argument`, `busy`, `fault`, `empty`, `tension`, `disabled`, `safe_state`, `timeout` (the move did not finish within `advance_timeout_ms` and was stopped), `offline` or `no_answer`. `offline` and `no_answer` are `503`, the rest `409`.
+* `POST /api/feeder/advance?slot=N[&count=K]` moves the tape K pitches (1 to 8, 1 by default) and answers when the move is over. The answer is `{"ok":true,"why":"ok","slot":N,"feeder":{...}}` or, with `ok` false, `why` says what stopped it: `bad_argument`, `busy`, `fault`, `empty`, `tension`, `disabled`, `safe_state`, `stopped` (a stop was given while the tape moved), `timeout` (the move did not finish within `advance_timeout_ms` and was stopped), `offline` or `no_answer`. `offline` and `no_answer` are `503`, the rest `409`.
 * `POST /api/feeder/retract?slot=N[&count=K]` the same backwards; `retract_off` unless the setting `retract_enabled` is on.
 * `POST /api/feeder/identify?slot=N` the feeder blinks its LED and gives its firmware version.
 * `POST /api/feeder/count?slot=N&n=K` says how many advances are left in the tape (0 to 65534).
 * `POST /api/feeder/pitch?slot=N&mm=P` sets the pitch of one feeder (2, 4, 8, 12 or 16), when it is still.
 * `POST /api/feeder/ack?slot=N[&reenable=1]` clears a fault whose cause is gone (`still_active` while it is there); `reenable=1` is needed for a feeder disabled by too many faults. Without a slot it clears the safe state of the node (`cleared`, or `not_held`).
-* `POST /api/feeder/stop` stops every feeder at once.
+* `POST /api/feeder/stop` stops every feeder at once, also while an advance is waited for.
+* While an advance is waited for, reads are answered and `POST /api/feeder/stop` is carried out; any other order answers `409` with `busy`. The transport has to hand the node what arrives in that time (`Bus::listen`).
+* A request line without its HTTP version is a line cut short and answers `400`, and so does a field that is named and cannot be read (`slot=`, `count=`): it is never taken as left out.
 * `POST /api/discover` asks every slot again who is there.
 
 The server's own routes and codes (for example `409 pnp_feeder_short`) are not changed by this node.
@@ -93,9 +95,9 @@ A feeder that holds a fault moves nothing until it is acknowledged, and it is ac
 
 ## The safe state
 
-* A feeder that has heard the node once and then nothing for `link_lost_ms` stops the tape where it is and holds `FDR-L01`.
+* A feeder that has heard the node once and then nothing for `link_lost_ms` stops the tape where it is and holds `FDR-L01`. A feeder disabled by too many faults stays as it is (`FDR-D01`): only `reenable=1` clears it.
 * The node sends a heartbeat to all the feeders three times in every `link_lost_ms`, only while it is itself fine.
-* A node that has not heard the server (a request with the token) for `server_lost_ms` sends a stop to all, stops the heartbeat (so the feeders go to their safe state a moment later) and refuses to move anything until a person acknowledges it. The server must therefore ask something with the token at least once in that time. The node says it in `server_lost_ms` of `GET /api/status`, so a server does not have to guess it; asking for the status without the token reads it and does not count as the server being heard. It is not `link_lost_ms`, the watch of the feeders over the node.
+* A node that has not heard the server (a request with the token) for `server_lost_ms` sends a stop to all, stops the heartbeat (so the feeders go to their safe state a moment later) and refuses to move anything until a person acknowledges it. The server must therefore ask something with the token at least once in that time. The node says it in `server_lost_ms` of `GET /api/status`, so a server does not have to guess it; asking for the status without the token reads it and does not count as the server being heard. It is not `link_lost_ms`, the watch of the feeders over the node. The watch also runs while an advance is waited for (a move cut by it is answered `safe_state`), and it is judged before a request counts, so the order that ends a silence that was already too long is refused.
 * A cut bus makes the feeders stop on their own and the node mark the slots offline after `offline_after` exchanges without an answer.
 
 ## The frame `eh3d.feeder/1`

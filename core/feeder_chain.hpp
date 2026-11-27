@@ -6,6 +6,7 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -26,6 +27,9 @@ public:
     /// Lets time pass (the firmware sleeps; the simulator runs its feeders).
     virtual void wait(std::uint32_t ms) = 0;
     virtual std::uint32_t now_ms() const = 0;
+    /// Called while an advance is waited for: the transport hands to Node::handle what arrived in the meantime, so that a stop can be given and the server is heard.
+    /// A transport that delivers nothing here leaves the node deaf while a tape moves.
+    virtual void listen() {}
     /// What the bus under the node counted (the simulator fills it; a bus that does not count answers zeros).
     virtual LinkStats link_stats() const { return LinkStats(); }
 };
@@ -81,6 +85,15 @@ public:
     unsigned long exchanges() const { return exchanges_; }
     unsigned long retries() const { return retries_; }
     unsigned long bus_errors() const { return errors_; }
+
+    /// What to do each time an advance has waited a little (the node listens and keeps its watch over the server).
+    void while_waiting(std::function<void()> fn) { waiting_ = std::move(fn); }
+
+    /// Stops every feeder at once, and ends an advance that is being waited for.
+    void halt() {
+        halted_ = true;
+        broadcast(kCmdStop);
+    }
 
     /// One command to one feeder, sent again up to `bus_retries` times when nothing good comes back.
     Reply request(std::uint8_t addr, std::uint8_t cmd, const std::vector<std::uint8_t>& payload = {}) {
@@ -145,6 +158,7 @@ public:
         if (count < 1 || count > 8) { o.ok = false; o.why = "bad_argument"; return o; }
         SlotInfo& s = slots_[static_cast<std::size_t>(slot_n)];
         if (!s.online) { o.ok = false; o.why = "offline"; return o; }
+        halted_ = false;
         Reply r = request(static_cast<std::uint8_t>(slot_n), backward ? kCmdRetract : kCmdAdvance, {static_cast<std::uint8_t>(count)});
         if (!r.ok) { o.ok = false; o.why = error_text(r.error); return o; }
         std::uint32_t waited = 0;
@@ -159,6 +173,12 @@ public:
             }
             bus_.wait(poll);
             waited += poll;
+            if (waiting_) waiting_();
+            if (halted_) {  // a tape that was stopped is not where it was asked to be, whatever the feeder says now
+                request(static_cast<std::uint8_t>(slot_n), kCmdStatus);
+                o.ok = false; o.why = "stopped";
+                return o;
+            }
             if (bus_.now_ms() - beat >= static_cast<std::uint32_t>(cfg_.link_lost_ms / 3)) {
                 broadcast(kCmdPing);
                 beat = bus_.now_ms();
@@ -200,6 +220,8 @@ private:
     Bus& bus_;
     Settings cfg_;
     std::vector<SlotInfo> slots_;
+    std::function<void()> waiting_;
+    bool halted_ = false;
     std::uint8_t seq_ = 0;
     unsigned long exchanges_ = 0, retries_ = 0, errors_ = 0;
 };

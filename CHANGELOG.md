@@ -4,6 +4,11 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **A stop reaches a tape that is moving (safety):** while the node waited for the end of an advance it heard nothing, so a stop could not be given. It now listens through the bus (`Bus::listen`, for the transport to fill), carries out a stop, answers other orders `busy`, and an advance that was stopped is answered `stopped`, never as done. On the simulator only.
+- **The watch over the server runs during a move and before a late request counts (safety):** a server lost in the middle of an advance stops the chain and the advance is answered `safe_state`, and a request that ends a silence longer than `server_lost_ms` no longer hides it.
+- **A feeder disabled by too many faults stays disabled when the node is lost (safety):** the link watch turned it into the safe state, and a plain acknowledgement then let it move again without `reenable=1`.
+- **A request that arrived cut short or with an unreadable field is no longer an order (safety):** a request line without its HTTP version is `400`, and so are `ack?slot=` (it was read as the acknowledgement of the whole node) and `count=` without a value. Seven new tests.
+
 ## [0.0.3] - Says its link time and works on while the server waits (simulator only)
 
 - **The shared lessons check reads only what is part of the repository:** what git ignores, and folders such as `managed_components` that a firmware build downloads, are no longer analysed, so the local validation no longer fails over downloaded code.
